@@ -404,6 +404,17 @@ tbody tr:hover{background:#faf6ef}
   </div>
 </footer>
 
+<!-- CloudBase Web SDK v3（PG 云端注册/审核同步；需与 index.html 同目录部署 tcb-sdk.esm.js） -->
+<script type="module">
+import cloudbase from "./tcb-sdk.esm.js";
+const CB_ENV="xbbjs-d9gisku0p7cb9fd53";
+const CB_KEY="eyJhbGciOiJSUzI1NiIsImtpZCI6ImVhNjM1YzgxLWRmZWEtNGYxZi05OGQ3LWM3YzU5YTRkYjc3MSJ9.eyJpc3MiOiJodHRwczovL3hiYmpzLWQ5Z2lza3UwcDdjYjlmZDUzLmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJ4YmJqcy1kOWdpc2t1MHA3Y2I5ZmQ1MyIsImV4cCI6NDA5MTUzMDg0OCwiaWF0IjoxNzg3ODQ3NjQ4LCJub25jZSI6IjI1NEQtcklSUlphbzY4Q0FncUQ3ckEiLCJhdF9oYXNoIjoiMjU0RC1ySVJSWmFvNjhDQWdxRDdyQSIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJ4YmJqcy1kOWdpc2t1MHA3Y2I5ZmQ1MyIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJyb2xlIjoiYW5vbiIsImlzX2Fub255bW91cyI6dHJ1ZSwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiYW5vbnltb3VzIiwicHJvdmlkZXJzIjpbImFub255bW91cyJdfSwidXNlcl9tZXRhZGF0YSI6eyJuYW1lIjoiQW5vbnltb3VzIn0sInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.gN5curqA2M9aocnYSZgP7FY8-G7_0cnp8se93pZwIxi4t_AtwwmxvQj_qOfPEL2qfKC8Wh5eokXc0QQQXqeuFeF6Ttu4FC9XJayORn4cZNT9RpOgQKIPynrx75omWe4wIhK_b7-m7H8xgT3Otv8bVUHFGXStFJKLQSiG_qH54lDIUO4k-6kcBEU_9mCZY0eAoNqnOxitzffkDTB933CQHcTTgrKNSLjCX8wPAHnkYPDN-inkIIxJi6xjcv-X4mm0ZWvgRW9H7cpBB4CNdo-QTEHHc3fAjtcIPR0vpALwxjJXVKfQlL3BsNqlc1sc4Kz8PqE5o4buuJrqR7wfYWJwHg";
+window.cbApp=cloudbase.init({env:CB_ENV,region:"ap-shanghai",accessKey:CB_KEY,auth:{detectSessionInUrl:true}});
+window.cbAuth=window.cbApp.auth;
+window.cbDb=window.cbApp.rdb();
+console.log("CloudBase SDK 就绪:",CB_ENV);
+</script>
+
 <script>
 "use strict";
 /* ================= 工具 ================= */
@@ -490,8 +501,8 @@ function ensureUserDB(){
   }catch(e){}
 }
 
-// 注册：手机号 + 机构信息 + 真实姓名（无需验证码，注册后提交后台审核）
-function doRegister(){
+// 注册：手机号 + 机构信息 + 真实姓名（无需验证码，提交云端后台审核）
+async function doRegister(){
   const phone=$("#regPhone").value.trim(), pwd=$("#regPwd").value, pwd2=$("#regPwd2").value;
   const name=$("#regName").value.trim(), org=$("#regOrg").value.trim(), orgType=$("#regOrgType").value, title=$("#regTitle").value.trim();
   if(!/^1\d{10}$/.test(phone)) return toast("手机号格式不正确");
@@ -501,78 +512,114 @@ function doRegister(){
   if(!org) return toast("请填写机构名称");
   if(!orgType) return toast("请选择机构类型");
   if(!title) return toast("请填写职务");
-  if(findUserByPhone(phone)) return toast("该手机号已注册，请直接登录");
-  const u={uid:"u"+Date.now().toString(36)+Math.floor(Math.random()*100),phone,pwd:hashPwd(pwd),name,org,orgType,title,
-    status:"pending",rejectReason:"",createdAt:new Date().toISOString(),approvedAt:null,disabled:false};
-  Users.push(u); saveAuth();
-  toast("注册成功！请等待后台审核（一般 1 个工作日内）");
-  ["regPhone","regPwd","regPwd2","regName","regOrg","regTitle"].forEach(id=>$("#"+id).value="");
-  $("#regOrgType").value="";
-  showAuth("login");
+  if(!window.cbDb) return toast("云端服务未加载，请刷新后重试");
+  try{
+    // 匿名登录以获得写入会话（注册数据提交云端）
+    const {error:aErr}=await window.cbAuth.signInAnonymously();
+    if(aErr) return toast("云端初始化失败："+aErr.message);
+    const {data:sess}=await window.cbAuth.getSession();
+    const uid=sess&&sess.session?sess.session.user.id:"anon";
+    // 写入云端 reg_users（RLS 强制 status=pending）
+    const {error}=await window.cbDb.from("reg_users").insert({
+      user_id:uid,phone,name,org,org_type:orgType,title,pwd_hash:hashPwd(pwd)
+    });
+    if(error) return toast("提交失败："+(error.message||"该手机号可能已注册"));
+    toast("注册成功！请等待后台审核（一般 1 个工作日内）");
+    ["regPhone","regPwd","regPwd2","regName","regOrg","regTitle"].forEach(id=>$("#"+id).value="");
+    $("#regOrgType").value="";
+    showAuth("login");
+  }catch(e){ return toast("注册异常："+e.message); }
 }
-function doLogin(){
+async function doLogin(){
   const phone=$("#loginPhone").value.trim(), pwd=$("#loginPwd").value;
   if(!phone||!pwd) return toast("请输入手机号和密码");
-  const u=findUserByPhone(phone);
-  if(!u||u.pwd!==hashPwd(pwd)) return toast("手机号或密码错误");
-  if(u.disabled) return toast("账号已被禁用，请联系管理员");
-  if(u.status==="pending") return toast("账号审核中，请等待后台审核通过");
-  if(u.status==="rejected") return toast("注册未通过审核："+(u.rejectReason||"信息不完整，请联系管理员"));
-  Session={uid:u.uid,phone:u.phone,name:u.name,org:u.org,role:"user"};
-  saveSession(); enterApp();
+  if(!window.cbDb) return toast("云端服务未加载，请刷新后重试");
+  try{
+    const {error:aErr}=await window.cbAuth.signInAnonymously();
+    if(aErr) return toast("云端初始化失败："+aErr.message);
+    // 通过云端 login_check 函数验证手机号+密码（数据存云端 reg_users）
+    const {data,error}=await window.cbDb.rpc("login_check",{p_phone:phone,p_pwd_hash:hashPwd(pwd)});
+    if(error) return toast("登录失败："+error.message);
+    const u=Array.isArray(data)?data[0]:data;
+    if(!u) return toast("手机号或密码错误");
+    if(u.disabled) return toast("账号已被禁用，请联系管理员");
+    if(u.status==="pending") return toast("账号审核中，请等待后台审核通过");
+    if(u.status==="rejected") return toast("注册未通过审核："+(u.reject_reason||"信息不完整，请联系管理员"));
+    Session={uid:u.user_id||("u"+u.phone),phone:u.phone,name:u.name,org:u.org,role:"user"};
+    saveSession(); enterApp();
+  }catch(e){ return toast("登录异常："+e.message); }
 }
-// 管理员（仅口令登录）
-function doAdminLogin(){
+// 管理员（仅口令登录；内部映射到云端管理员账号）
+async function doAdminLogin(){
   const pwd=$("#admPwd").value;
-  if(pwd!==Admin.pwd) return toast("管理员口令错误");
-  Session={uid:"admin",name:"管理员",org:"西部证券研发中心",role:"admin"};
-  saveSession(); enterAdmin();
+  if(pwd!=="GRD68E") return toast("管理员口令错误");
+  if(!window.cbAuth) return toast("云端服务未加载，请刷新后重试");
+  try{
+    const {error}=await window.cbAuth.signInWithPassword({username:"admin",password:"GRD68E@2026xbbjs"});
+    if(error) return toast("管理员登录失败："+error.message);
+    Session={uid:"admin",name:"管理员",org:"西部证券研发中心",role:"admin"};
+    saveSession(); enterAdmin();
+  }catch(e){ return toast("管理员登录异常："+e.message); }
 }
-function renderAdmin(){
+async function renderAdmin(){
   $("#adminWho").textContent="管理员";
-  const pend=Users.filter(u=>u.status==="pending");
-  const all=Users.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  const badge=u=>`<span class="role-badge ${u.status}">${u.status==="pending"?"待审核":(u.status==="approved"?"已认证":"已驳回")}</span>`;
-  const row=u=>`<tr>
-    <td>${esc(u.name)}</td>
-    <td>${esc(u.phone)}</td>
-    <td>${esc(u.org)}<br><span class="muted" style="font-size:11px">${esc(u.orgType||"")} · ${esc(u.title||"")}</span></td>
-    <td>${badge(u)}${u.status==="rejected"?`<div style="font-size:11px;color:var(--red);margin-top:2px">${esc(u.rejectReason||"")}</div>`:""}${u.disabled?`<div class="muted" style="font-size:11px">已禁用</div>`:""}</td>
-    <td style="font-size:11px;color:var(--txt3);white-space:nowrap">${(u.createdAt||"").slice(0,16).replace("T"," ")}</td>
-    <td style="white-space:nowrap">
-      ${u.status==="pending"?`<button class="admin-btn ok" onclick="approveUser('${u.uid}')">通过</button> <button class="admin-btn warn" onclick="rejectUser('${u.uid}')">驳回</button>`:""}
-      ${u.status==="approved"?`<button class="admin-btn" onclick="toggleUser('${u.uid}')">${u.disabled?"启用":"禁用"}</button>`:""}
-      ${u.status==="rejected"?`<button class="admin-btn ok" onclick="approveUser('${u.uid}')">重新通过</button>`:""}
-    </td></tr>`;
-  $("#adminBody").innerHTML=`
-    <div class="admin-card"><h2>待审核注册 <span class="cnt">${pend.length}</span></h2>
-      ${pend.length?`<table class="admin-table"><thead><tr><th>姓名</th><th>手机号</th><th>机构信息</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody>${pend.map(row).join("")}</tbody></table>`:`<div class="muted" style="font-size:13px">暂无待审核注册</div>`}
-    </div>
-    <div class="admin-card"><h2>全部注册用户 <span class="cnt">${all.length}</span></h2>
-      ${all.length?`<table class="admin-table"><thead><tr><th>姓名</th><th>手机号</th><th>机构信息</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody>${all.map(row).join("")}</tbody></table>`:`<div class="muted" style="font-size:13px">暂无注册用户</div>`}
-    </div>
-    <div class="admin-card"><h2>系统设置</h2>
-      <button class="admin-btn" onclick="changeAdminPwd()">修改管理员口令</button>
-      <span class="muted" style="font-size:12px;margin-left:10px">初始口令 GRD68E，登录后建议尽快修改。</span>
-    </div>`;
+  const box=$("#adminBody");
+  if(!window.cbDb){ box.innerHTML=`<div class="admin-card"><div class="muted" style="font-size:13px">云端服务未加载，请刷新后重试。</div></div>`; return; }
+  try{
+    const {data:all,error:e1}=await window.cbDb.from("reg_users").select("*").order("created_at",{ascending:false});
+    if(e1) throw e1;
+    const rows=all||[];
+    const pend=rows.filter(u=>u.status==="pending");
+    const badge=u=>`<span class="role-badge ${u.status}">${u.status==="pending"?"待审核":(u.status==="approved"?"已认证":"已驳回")}</span>`;
+    const row=u=>`<tr>
+      <td>${esc(u.name)}</td>
+      <td>${esc(u.phone)}</td>
+      <td>${esc(u.org)}<br><span class="muted" style="font-size:11px">${esc(u.org_type||"")} · ${esc(u.title||"")}</span></td>
+      <td>${badge(u)}${u.status==="rejected"?`<div style="font-size:11px;color:var(--red);margin-top:2px">${esc(u.reject_reason||"")}</div>`:""}${u.disabled?`<div class="muted" style="font-size:11px">已禁用</div>`:""}</td>
+      <td style="font-size:11px;color:var(--txt3);white-space:nowrap">${(u.created_at||"").slice(0,16).replace("T"," ")}</td>
+      <td style="white-space:nowrap">
+        ${u.status==="pending"?`<button class="admin-btn ok" onclick="approveUser('${u.user_id}')">通过</button> <button class="admin-btn warn" onclick="rejectUser('${u.user_id}')">驳回</button>`:""}
+        ${u.status==="approved"?`<button class="admin-btn" onclick="toggleUser('${u.user_id}')">${u.disabled?"启用":"禁用"}</button>`:""}
+        ${u.status==="rejected"?`<button class="admin-btn ok" onclick="approveUser('${u.user_id}')">重新通过</button>`:""}
+      </td></tr>`;
+    box.innerHTML=`
+      <div class="admin-card"><h2>待审核注册 <span class="cnt">${pend.length}</span></h2>
+        ${pend.length?`<table class="admin-table"><thead><tr><th>姓名</th><th>手机号</th><th>机构信息</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody>${pend.map(row).join("")}</tbody></table>`:`<div class="muted" style="font-size:13px">暂无待审核注册</div>`}
+      </div>
+      <div class="admin-card"><h2>全部注册用户 <span class="cnt">${rows.length}</span></h2>
+        ${rows.length?`<table class="admin-table"><thead><tr><th>姓名</th><th>手机号</th><th>机构信息</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody>${rows.map(row).join("")}</tbody></table>`:`<div class="muted" style="font-size:13px">暂无注册用户</div>`}
+      </div>
+      <div class="admin-card"><h2>系统设置</h2>
+        <span class="muted" style="font-size:12px">管理员口令由系统预设（GRD68E），注册/审核数据已接入云端数据库，跨设备实时同步。</span>
+      </div>`;
+  }catch(e){
+    box.innerHTML=`<div class="admin-card"><div class="muted" style="font-size:13px">云端加载失败：${esc(e.message||e)}（请确认管理员已登录云端账号）</div></div>`;
+  }
 }
-function approveUser(uid){ const u=findUserByUid(uid); if(!u) return; u.status="approved"; u.approvedAt=new Date().toISOString(); saveAuth(); toast("已通过认证："+u.name); renderAdmin(); }
-function rejectUser(uid){
+async function approveUser(uid){
+  if(!window.cbDb) return toast("云端服务未加载");
+  const {error}=await window.cbDb.from("reg_users").update({status:"approved",updated_at:new Date().toISOString()}).eq("user_id",uid);
+  if(error) return toast("操作失败："+error.message);
+  toast("已通过认证"); renderAdmin();
+}
+async function rejectUser(uid){
   const reason=prompt("请输入驳回原因（将展示给该用户）：");
   if(reason==null) return;
-  const u=findUserByUid(uid); if(!u) return;
-  u.status="rejected"; u.rejectReason=reason.trim(); saveAuth(); toast("已驳回："+u.name); renderAdmin();
+  if(!window.cbDb) return toast("云端服务未加载");
+  const {error}=await window.cbDb.from("reg_users").update({status:"rejected",reject_reason:reason.trim(),updated_at:new Date().toISOString()}).eq("user_id",uid);
+  if(error) return toast("操作失败："+error.message);
+  toast("已驳回"); renderAdmin();
 }
-function toggleUser(uid){ const u=findUserByUid(uid); if(!u) return; u.disabled=!u.disabled; saveAuth(); toast((u.disabled?"已禁用":"已启用")+"："+u.name); renderAdmin(); }
-function changeAdminPwd(){
-  const old=prompt("请输入原口令："); if(old==null) return;
-  if(old!==Admin.pwd) return toast("原口令错误");
-  const p1=prompt("请输入新口令（≥6 位）："); if(p1==null) return;
-  if(p1.length<6) return toast("口令至少 6 位");
-  const p2=prompt("请再次输入新口令："); if(p2==null) return;
-  if(p1!==p2) return toast("两次输入不一致");
-  Admin.pwd=p1; saveAuth(); toast("管理员口令已修改");
+async function toggleUser(uid){
+  if(!window.cbDb) return toast("云端服务未加载");
+  const {data:cur,error:q}=await window.cbDb.from("reg_users").select("disabled,name").eq("user_id",uid).single();
+  if(q) return toast("查询失败："+q.message);
+  const nd=!cur.disabled;
+  const {error}=await window.cbDb.from("reg_users").update({disabled:nd,updated_at:new Date().toISOString()}).eq("user_id",uid);
+  if(error) return toast("操作失败："+error.message);
+  toast((nd?"已禁用":"已启用")+"："+cur.name); renderAdmin();
 }
+/* 管理员口令由系统预设（GRD68E 映射云端管理员账号），不提供在线修改 */
 /* ================= 认证与用户系统 END ================= */
 
 let DB={companies:[],announcements:[],updatedAt:null};
@@ -2065,8 +2112,8 @@ function init(){
   loadAuth();
   if(Session){
     if(Session.role==="admin"){ enterAdmin(); return; }
-    const u=findUserByUid(Session.uid);
-    if(u&&u.status==="approved"&&!u.disabled){ enterApp(); return; }
+    // 普通用户：Session 为登录时云端验证后缓存，直接进入只读工作台
+    enterApp(); return;
   }
   Session=null; saveSession(); showAuth("login");
 }
