@@ -280,8 +280,7 @@ tbody tr:hover{background:#faf6ef}
 
     <!-- 管理员登录 -->
     <div id="authAdmin" class="auth-form hidden">
-      <div class="field"><label>管理员账号</label><input id="admAcct" type="text" placeholder="默认 admin"></div>
-      <div class="field"><label>管理员密码</label><input id="admPwd" type="password" placeholder="默认 admin123（登录后请尽快修改）" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+      <div class="field"><label>管理员口令</label><input id="admPwd" type="password" placeholder="请输入管理员口令" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
       <button class="btn-primary" onclick="doAdminLogin()">进入管理后台</button>
     </div>
   </div>
@@ -375,11 +374,11 @@ tbody tr:hover{background:#faf6ef}
         <div class="field">
           <button class="btn" style="width:100%;background:var(--gold);color:#fff;padding:12px" onclick="exportCSV()">导出 CSV（研判+核心字段）</button>
         </div>
-        <div class="field">
+        <div class="field" data-admin="1">
           <button class="btn" style="width:100%;background:#3a6ea5;color:#fff;padding:12px" onclick="document.getElementById('importFile').click()">导入 JSON（备份 / 监控结果）</button>
           <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)">
         </div>
-        <div class="field">
+        <div class="field" data-admin="1">
           <button class="btn" style="width:100%;background:#6b7280;color:#fff;padding:12px" onclick="resetData()">恢复示例数据</button>
         </div>
       </div>
@@ -429,16 +428,21 @@ const STORAGE_KEY="bse_ipo_workbench_v1";
 
 /* ================= 认证与用户系统 ================= */
 const USERS_KEY="bse_users_v1", SESSION_KEY="bse_session_v1", ADMIN_KEY="bse_admin_v1";
-let Users=[], Session=null, Admin={acct:"admin",pwd:"admin123"};
+let Users=[], Session=null, Admin={pwd:"GRD68E"};
 function hashPwd(s){ let h=7; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return "h"+h.toString(36); }
 function loadAuth(){
   try{ const u=localStorage.getItem(USERS_KEY); Users=u?JSON.parse(u):[]; }catch(e){ Users=[]; }
-  try{ const a=localStorage.getItem(ADMIN_KEY); if(a) Admin=JSON.parse(a); }catch(e){}
+  try{
+    const a=localStorage.getItem(ADMIN_KEY);
+    if(a){ const old=JSON.parse(a); Admin={pwd:(old&&old.acct===undefined&&old.pwd)?old.pwd:"GRD68E"}; }
+    else Admin={pwd:"GRD68E"};
+  }catch(e){ Admin={pwd:"GRD68E"}; }
   try{ const s=localStorage.getItem(SESSION_KEY); if(s) Session=JSON.parse(s); else Session=null; }catch(e){ Session=null; }
 }
 function saveAuth(){ try{ localStorage.setItem(USERS_KEY,JSON.stringify(Users)); localStorage.setItem(ADMIN_KEY,JSON.stringify(Admin)); }catch(e){ toast("本地存储失败，请检查浏览器设置"); } }
 function saveSession(){ try{ if(Session) localStorage.setItem(SESSION_KEY,JSON.stringify(Session)); else localStorage.removeItem(SESSION_KEY); }catch(e){} }
 function currentUid(){ return Session?Session.uid:null; }
+function canEdit(){ return !!(Session&&Session.role==="admin"); }
 function dbKey(){ return "bse_db_"+ (currentUid()||"guest"); }
 function findUserByPhone(ph){ return Users.find(u=>u.phone===ph); }
 function findUserByUid(id){ return Users.find(u=>u.uid===id); }
@@ -517,15 +521,15 @@ function doLogin(){
   Session={uid:u.uid,phone:u.phone,name:u.name,org:u.org,role:"user"};
   saveSession(); enterApp();
 }
-// 管理员
+// 管理员（仅口令登录）
 function doAdminLogin(){
-  const acct=$("#admAcct").value.trim(), pwd=$("#admPwd").value;
-  if(acct!==Admin.acct||pwd!==Admin.pwd) return toast("管理员账号或密码错误");
+  const pwd=$("#admPwd").value;
+  if(pwd!==Admin.pwd) return toast("管理员口令错误");
   Session={uid:"admin",name:"管理员",org:"西部证券研发中心",role:"admin"};
   saveSession(); enterAdmin();
 }
 function renderAdmin(){
-  $("#adminWho").textContent="管理员："+(Admin.acct||"admin");
+  $("#adminWho").textContent="管理员";
   const pend=Users.filter(u=>u.status==="pending");
   const all=Users.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   const badge=u=>`<span class="role-badge ${u.status}">${u.status==="pending"?"待审核":(u.status==="approved"?"已认证":"已驳回")}</span>`;
@@ -548,8 +552,8 @@ function renderAdmin(){
       ${all.length?`<table class="admin-table"><thead><tr><th>姓名</th><th>手机号</th><th>机构信息</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody>${all.map(row).join("")}</tbody></table>`:`<div class="muted" style="font-size:13px">暂无注册用户</div>`}
     </div>
     <div class="admin-card"><h2>系统设置</h2>
-      <button class="admin-btn" onclick="changeAdminPwd()">修改管理员密码</button>
-      <span class="muted" style="font-size:12px;margin-left:10px">默认账号 admin / admin123，首次登录后请尽快修改。</span>
+      <button class="admin-btn" onclick="changeAdminPwd()">修改管理员口令</button>
+      <span class="muted" style="font-size:12px;margin-left:10px">初始口令 GRD68E，登录后建议尽快修改。</span>
     </div>`;
 }
 function approveUser(uid){ const u=findUserByUid(uid); if(!u) return; u.status="approved"; u.approvedAt=new Date().toISOString(); saveAuth(); toast("已通过认证："+u.name); renderAdmin(); }
@@ -561,13 +565,13 @@ function rejectUser(uid){
 }
 function toggleUser(uid){ const u=findUserByUid(uid); if(!u) return; u.disabled=!u.disabled; saveAuth(); toast((u.disabled?"已禁用":"已启用")+"："+u.name); renderAdmin(); }
 function changeAdminPwd(){
-  const old=prompt("请输入原密码："); if(old==null) return;
-  if(old!==Admin.pwd) return toast("原密码错误");
-  const p1=prompt("请输入新密码（≥6 位）："); if(p1==null) return;
-  if(p1.length<6) return toast("密码至少 6 位");
-  const p2=prompt("请再次输入新密码："); if(p2==null) return;
+  const old=prompt("请输入原口令："); if(old==null) return;
+  if(old!==Admin.pwd) return toast("原口令错误");
+  const p1=prompt("请输入新口令（≥6 位）："); if(p1==null) return;
+  if(p1.length<6) return toast("口令至少 6 位");
+  const p2=prompt("请再次输入新口令："); if(p2==null) return;
   if(p1!==p2) return toast("两次输入不一致");
-  Admin.pwd=p1; saveAuth(); toast("管理员密码已修改");
+  Admin.pwd=p1; saveAuth(); toast("管理员口令已修改");
 }
 /* ================= 认证与用户系统 END ================= */
 
@@ -1395,7 +1399,8 @@ function openDetail(id){
 function renderDetail(){
   const c=findCompany(currentId); if(!c) return;
   const st=STAGE[c.status];
-  const starWidget=`<span class="stars" data-act="rate">${[1,2,3,4,5].map(i=>`<span data-v="${i}" class="${i<=c.rating.stars?'on':''}">★</span>`).join("")}</span>`;
+  const canE=canEdit();
+  const starWidget=`<span class="stars" ${canE?'data-act="rate"':''}>${[1,2,3,4,5].map(i=>`<span ${canE?`data-v="${i}"`:''} class="${i<=c.rating.stars?'on':''}">★</span>`).join("")}</span>`;
   $("#detailRoot").innerHTML=`
   <div class="back" onclick="go('dashboard')">← 返回看板</div>
   <div class="card">
@@ -1552,13 +1557,14 @@ function renderDeep(c){
     s.push(`<div id="deep-risk"><div class="deep-h3">十二、风险因素</div><ul style="padding-left:20px;color:var(--down)">${d.riskFactors.map(x=>`<li style="font-size:13px;line-height:1.85;margin-bottom:4px">${esc(x)}</li>`).join("")}</ul></div>`);
   }
 
+  const editBtn=canEdit()?`<span class="deep-edit" onclick="startDeepEdit('${c.id}')">✎ 编辑</span>`:"";
   if(!s.length){
-    return `<div class="card" id="deep"><h2>深度基本面分析<span class="deep-edit" onclick="startDeepEdit('${c.id}')">✎ 编辑</span></h2><div class="tiny">深度分析待补充（核心信息 / 业务与产品拆解 / 发展沿革 / 股权架构 / 财务变动分析 / 行业 / 竞争格局 / 可比对标 / 增长看点 / 募投 / 盈利预测 / 风险）。点击右上角「编辑」在线填写。</div></div>`;
+    return `<div class="card" id="deep"><h2>深度基本面分析${editBtn}</h2><div class="tiny">深度分析待补充（核心信息 / 业务与产品拆解 / 发展沿革 / 股权架构 / 财务变动分析 / 行业 / 竞争格局 / 可比对标 / 增长看点 / 募投 / 盈利预测 / 风险）。${canEdit()?'点击右上角「编辑」在线填写。':''}</div></div>`;
   }
-  return `<div class="card" id="deep"><h2>深度基本面分析<span class="deep-edit" onclick="startDeepEdit('${c.id}')">✎ 编辑</span></h2>${s.join("")}</div>`;
+  return `<div class="card" id="deep"><h2>深度基本面分析${editBtn}</h2>${s.join("")}</div>`;
 }
 /* ================= 深度分析在线编辑 ================= */
-function startDeepEdit(id){ deepEditId=id; renderDetail(); setTimeout(()=>{const el=$("#deep"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});},50); }
+function startDeepEdit(id){ if(!canEdit()) return toast("仅管理员可编辑"); deepEditId=id; renderDetail(); setTimeout(()=>{const el=$("#deep"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});},50); }
 function cancelDeepEdit(){ deepEditId=null; renderDetail(); }
 function setPath(obj,path,val){ const ks=path.split("."); let o=obj; for(let i=0;i<ks.length-1;i++){ o[ks[i]]=o[ks[i]]||{}; o=o[ks[i]]; } o[ks[ks.length-1]]=val; }
 function collectRows(kind, keys){
@@ -1672,6 +1678,7 @@ function addRow(kind){
   box.appendChild(div.firstChild);
 }
 function saveDeepEdit(id){
+  if(!canEdit()) return toast("仅管理员可编辑");
   const c=findCompany(id); if(!c) return;
   const d=c.deep||{};
   $$("#deep [data-path]").forEach(el=>{
@@ -1856,6 +1863,23 @@ function renderFirstDay(c){
   const close=fd.close;
   const rise=issue&&close? (close/issue-1):null;
   const perLot=issue&&close? (close-issue)*100:null;
+  if(!canEdit()){
+    const has=fd.open!=null||fd.close!=null||fd.high!=null||fd.low!=null||fd.turnover!=null;
+    if(!has) return "";
+    return `<div class="card" id="firstday"><h2>上市首日复盘</h2>
+    <div class="kv">
+      <div class="item"><div class="k">发行价</div><div class="v">${issue!=null?fmtMoney(issue):"—"}</div></div>
+      <div class="item"><div class="k">开盘价</div><div class="v">${fd.open!=null?fmtMoney(fd.open):"—"}</div></div>
+      <div class="item"><div class="k">收盘价</div><div class="v">${fd.close!=null?fmtMoney(fd.close):"—"}</div></div>
+      <div class="item"><div class="k">最高</div><div class="v">${fd.high!=null?fmtMoney(fd.high):"—"}</div></div>
+      <div class="item"><div class="k">最低</div><div class="v">${fd.low!=null?fmtMoney(fd.low):"—"}</div></div>
+      <div class="item"><div class="k">换手率</div><div class="v">${fd.turnover!=null?fd.turnover+"%":"—"}</div></div>
+    </div>
+    <div class="result-box">
+      <div class="row"><span>收盘涨幅</span>${rise!=null?`<b>${pctColor(rise)}</b>`:"<b>—</b>"}</div>
+      <div class="row"><span>单签(100股)盈亏</span>${perLot!=null?`<b class="${clsOf(perLot)}">${sign(perLot)}${fmtMoney(perLot)}</b>`:"<b>—</b>"}</div>
+    </div></div>`;
+  }
   return `<div class="card" id="firstday"><h2>上市首日复盘</h2>
   <div class="grid2">
     <div class="field"><label>发行价(元)</label><input type="number" id="fd_issue" value="${issue||""}" step="0.01"></div>
@@ -1873,6 +1897,7 @@ function renderFirstDay(c){
   </div>`;
 }
 function saveFirstDay(){
+  if(!canEdit()) return toast("仅管理员可编辑");
   const c=findCompany(currentId); if(!c) return;
   const g=id=>{const e=$(id);return e&&e.value!==""?+e.value:null;};
   c.firstDay={issuePrice:g("#fd_issue"),open:g("#fd_open"),close:g("#fd_close"),high:g("#fd_high"),low:g("#fd_low"),turnover:g("#fd_turn")};
@@ -1905,6 +1930,13 @@ function renderBroker(c){
 }
 function renderRatingForm(c){
   const r=c.rating||{};
+  if(!canEdit()){
+    if(r.score==null&&!r.note) return "";
+    return `<div class="card" id="rating"><h2>研判记录</h2>
+      ${r.score!=null?`<div class="kv" style="margin-bottom:8px"><div class="item"><div class="k">综合评分</div><div class="v">${r.score} / 100</div></div></div>`:""}
+      ${r.note?`<p class="deep-p">${esc(r.note)}</p>`:""}
+      <div class="tiny">${r.updatedAt?("上次更新 "+r.updatedAt):""}</div></div>`;
+  }
   return `<div class="card" id="rating"><h2>研判记录</h2>
   <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px">
     <div><div class="section-label">综合评分（0-100）</div>
@@ -1921,6 +1953,7 @@ function renderRatingForm(c){
   </div></div>`;
 }
 function saveRating(){
+  if(!canEdit()) return toast("仅管理员可编辑");
   const c=findCompany(currentId); if(!c) return;
   c.rating.score=+$("#scoreSlider").value||0;
   c.rating.note=$("#noteInput").value;
@@ -1932,6 +1965,7 @@ function saveRating(){
 document.addEventListener("click",e=>{
   const star=e.target.closest("[data-act='rate'] [data-v]");
   if(star){
+    if(!canEdit()) return toast("仅管理员可编辑");
     const c=findCompany(currentId); if(!c) return;
     c.rating.stars=+star.dataset.v;
     save();
@@ -1966,6 +2000,8 @@ function renderNotes(){
 
 /* ================= 数据管理 ================= */
 function renderData(){
+  const canE=canEdit();
+  $$('[data-admin="1"]').forEach(el=>{ el.style.display=canE?"":"none"; });
   $("#annFeed").innerHTML=DB.announcements.length
     ? DB.announcements.slice(0,100).map(a=>`<div class="ann-item"><span class="d">${a.date||""}</span><span>${esc(a.title||"")}${a.company?(" · "+esc(a.company)):""}</span></div>`).join("")
     : `<div class="tiny">暂无导入公告。运行 bse_monitor.py 生成 JSON 后在此导入。</div>`;
@@ -1987,6 +2023,7 @@ function exportCSV(){
 }
 function download(blob,name){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); toast("已导出 "+name); }
 function importJSON(ev){
+  if(!canEdit()) return toast("仅管理员可编辑");
   const f=ev.target.files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=e=>{
@@ -2017,7 +2054,7 @@ function importJSON(ev){
   r.readAsText(f,"utf-8");
   ev.target.value="";
 }
-function resetData(){ if(confirm("确定恢复示例数据？将覆盖当前所有本地修改（研判/复盘等）。")){ DB=defaultDB(); save(); renderDashboard(); renderData(); toast("已恢复示例数据"); } }
+function resetData(){ if(!canEdit()) return toast("仅管理员可编辑"); if(confirm("确定恢复示例数据？将覆盖当前所有本地修改（研判/复盘等）。")){ DB=defaultDB(); save(); renderDashboard(); renderData(); toast("已恢复示例数据"); } }
 
 /* toast */
 let toastTimer;
