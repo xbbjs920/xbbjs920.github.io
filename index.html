@@ -162,7 +162,20 @@ tbody tr:hover{background:#faf6ef}
 .deep-h3{font-size:14px;font-weight:700;margin:20px 0 10px;padding:3px 0 3px 10px;border-left:3px solid var(--red);color:#2a3040}
 .deep-h3:first-child{margin-top:4px}
 .deep-p{font-size:13px;line-height:1.85;color:var(--txt);white-space:pre-wrap}
+.deep-para{font-size:13px;line-height:1.9;color:var(--txt);white-space:pre-wrap;background:#fafbfd;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:8px 0}
 .deep-note{font-size:11px;color:var(--txt3);font-style:normal}
+.ps-btn{display:inline-block;padding:8px 16px;background:linear-gradient(135deg,#7f0d22,#C41230);color:#fff;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(196,18,48,.25)}
+.ps-btn:hover{opacity:.92;color:#fff}
+.themes-label{font-size:12px;font-weight:700;color:var(--gold)}
+.theme-tag{background:linear-gradient(135deg,#fff8e6,#fdf3d7);border:1px solid #ecd9a0;color:#8a6d1a;font-weight:600}
+.warn-line{margin-top:8px;font-size:12px;color:#b45309;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:6px 10px}
+.rp-part{font-size:13px;font-weight:800;color:#fff;background:linear-gradient(90deg,var(--red),#d24a5f);display:inline-block;padding:4px 14px;border-radius:16px;margin:18px 0 6px}
+.rp-sec{margin-bottom:4px}
+.rp-list{padding-left:20px;color:var(--txt)}
+.rp-list li{font-size:13px;line-height:1.85;margin-bottom:4px;color:var(--down)}
+.report-body details{background:#fafbfd;border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:10px 14px}
+.report-body details summary{cursor:pointer;font-size:14px;font-weight:700;color:#2a3040;padding:6px 0;user-select:none}
+.report-body details[open] summary{color:var(--red)}
 .mini-kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:4px}
 .mini-kv .mk{background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
 .mini-kv .mk .k{font-size:11px;color:var(--txt3)}
@@ -432,7 +445,7 @@ const fmtMoney=(n)=>{ if(n==null||isNaN(n)) return "—"; return "¥"+ (+n).toFi
 const clsOf=(v)=> v>0?"up":(v<0?"down":"muted");
 const sign=(v)=> v>0?"+":"";
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const pctColor=(v)=>`<span class="${clsOf(v)} num">${sign(v)}${fmtNum(v,1)}%</span>`;
+const pctColor=(v)=>{ if(v==null||isNaN(v)||!isFinite(v)) return `<span class="${clsOf(0)} num">—</span>`; return `<span class="${clsOf(v)} num">${sign(v)}${fmtNum(v*100,1)}%</span>`; };
 
 /* ================= 状态 ================= */
 const STORAGE_KEY="bse_ipo_workbench_v1";
@@ -648,6 +661,9 @@ function C(o){ return Object.assign({
   comps:[],
   firstDay:{issuePrice:null,open:null,close:null,high:null,low:null,turnover:null},
   brokerQuotes:[],
+  prospectusUrl:"",
+  darkPool:{price:null,vsIssuePct:null,date:"",note:""},
+  themes:[],
   rating:{stars:0,score:null,note:"",updatedAt:null},
   announcements:[],
   deep:{
@@ -663,7 +679,34 @@ function C(o){ return Object.assign({
     projects:[],
     projectAnalysis:"",
     profitForecast:"",
-    riskFactors:[]
+    riskFactors:[],
+    topCustomers:[{name:"",revenue10k:null,share:null,note:""}],
+    topSuppliers:[{name:"",purchase10k:null,share:null,note:""}],
+    industryDeep:"",
+    competitionDeep:""
+  },
+  report:{
+    investmentLogic:"",
+    risks:[],
+    keyAssumptions:"",
+    marketViews:"",
+    catalysts:"",
+    valuation:"",
+    companyOverview:"",
+    companyHistory:"",
+    productTable:"",
+    equityStructure:"",
+    financialHistory:"",
+    revenueStructure:"",
+    profitability:"",
+    industryDef:"",
+    marketSize:"",
+    competitionLandscape:"",
+    competitiveness:"",
+    growthPoints:"",
+    comparableAnalysis:"",
+    profitModel:"",
+    riskSection:""
   }
 },o);}
 
@@ -679,9 +722,12 @@ C({id:"jfd",code:"920269",name:"杰锋动力",industry:"汽车零部件",status:
   thresholdPreview:{expectedFund:8360,threshold:1141,topThreshold:1365,note:"碎股门槛（顶格）约 1365 万，需抢时间申购"},
   financial:{years:[2023,2024,2025],revenue:[170741.69,210022.01,237288.03],netProfit:[13072.27,14509.76,14670.80],netDeducted:[12654.61,12909.30,14196.53]},
   forecast:{y2026:{revenue:245000,netProfit:15500},y2027:{revenue:270000,netProfit:18000}},
-  comps:[{name:"保隆科技",code:"603197",marketCap:128,peTTM:28.5,psTTM:2.1,pe2026E:22.3,pe2027E:18.0},
-         {name:"伯特利",code:"603596",marketCap:186,peTTM:32.1,psTTM:3.4,pe2026E:25.6,pe2027E:21.2},
-         {name:"拓普集团",code:"601689",marketCap:520,peTTM:26.0,psTTM:2.8,pe2026E:20.9,pe2027E:16.8}],
+  prospectusUrl:"https://pdf.dfcfw.com/pdf/H2_AN202608241828364927_1.pdf",
+  themes:["汽车零部件","排气系统","奇瑞产业链","氢燃料电池","智能悬架","国产替代"],
+  comps:[{name:"威孚高科",code:"000581",marketCap:177,peTTM:14.1,psTTM:1.32,pe2026E:null,pe2027E:null},
+         {name:"富临精工",code:"300432",marketCap:null,peTTM:53.3,psTTM:1.70,pe2026E:null,pe2027E:null},
+         {name:"恒勃股份",code:"301225",marketCap:null,peTTM:null,psTTM:null,pe2026E:null,pe2027E:null},
+         {name:"保隆科技",code:"603197",marketCap:128,peTTM:28.5,psTTM:2.1,pe2026E:22.3,pe2027E:18.0}],
   brokerQuotes:[{broker:"中介A",rangeLow:30,rangeHigh:32,note:"顶格万2.5",date:"2026-08-25"}],
   deep:{
     business:{overview:"主营汽车排气系统（尾气后处理）零部件，配套乘用车整车厂。围绕汽车进排气系统、动力系统两大核心，延伸布局氢燃料电池零部件、智能悬架零部件等前瞻赛道，排气系统位居国产品牌第一。",segments:[{name:"排气系统零部件",field:"乘用车整车厂（奇瑞等）",share:65.8,note:"主营与第一大客户奇瑞高度绑定"},{name:"动力系统零部件",field:"整车厂",share:null,note:"第二大业务板块"},{name:"氢燃料电池零部件",field:"新能源整车",share:null,note:"前瞻布局"},{name:"智能悬架零部件",field:"整车厂",share:null,note:"募投重点方向"}],revenueStructure:"前五大客户占营收 94% 以上，其中第一大客户奇瑞汽车销售占比 71.65%/71.83%/65.80%（2023-2025），客户高度集中。",architecture:"实控人范礼通过外资控股股东 JAPHL AUTOMOTIVE 控制公司，奇瑞汽车为第二大股东（奇瑞科技持股 15.34%）兼第一大客户，形成「外资控股 + 下游客户参股」的特殊股权与业务绑定结构。",tech:"排气系统国产品牌第一，掌握尾气后处理核心工艺，通过整车厂严格认证，配套体系壁垒高。",customers:"客户高度集中，前五大客户占比 94% 以上、第一大客户奇瑞占比 65% 以上，存在单一客户重大依赖风险。",mode:"以销定产为主，嵌入整车厂配套体系按主机厂订单供货。"},
@@ -700,25 +746,30 @@ C({id:"jfd",code:"920269",name:"杰锋动力",industry:"汽车零部件",status:
   },
   rating:{stars:4,score:78,note:"估值低+中介报价友好，建议顶格参与。",updatedAt:"2026-08-26"}}),
 
-C({id:"hdht",code:"920288",name:"华大海天",industry:"造纸印刷",status:"pending",
+C({id:"hdht",code:"920288",name:"华大海天",industry:"造纸印刷",status:"listed",
   biz:"杭州华大海天科技，主营数码纸基新材料、水性墨材料、食品包装材料，国家级专精特新小巨人+高新技术企业，拥有多孔结构修饰、温敏粘性等自主核心技术。",
-  highlights:["发行 PE 13.50 倍，低于行业 23.69 倍","专精特新小巨人，多项材料/膜结构技术领先"],
-  risks:["2024 年净利同比 -27.40%，业绩波动","可流通老股比例需关注"],
-  tags:["预计周五上市"],isXiaoJuren:true,
-  timeline:[{d:"2026-08-28",e:"北交所上市交易（发行价 12.57 元）"},{d:"2026-08-19",e:"发行结果公告（网上获配 0.0196%，有效申购 5097.55 倍）"},{d:"2026-08-17",e:"网上申购（发行价 12.57 元，PE 13.50 倍）"}],
+  highlights:["首日 +126.81%，收盘 28.51 元（最高 38.50 元）","发行 PE 13.50 倍，专精特新小巨人"],
+  risks:["2024 年净利同比 -27.40%，业绩波动","首日换手 97%，炒作后需关注估值回归"],
+  tags:["已上市"],isXiaoJuren:true,
+  timeline:[{d:"2026-08-28",e:"上市首日 +126.81%（开盘 25.18，收盘 28.51，最高 38.50，换手 97.03%）"},{d:"2026-08-19",e:"发行结果公告（网上获配 0.0196%，有效申购 5097.55 倍）"},{d:"2026-08-17",e:"网上申购（发行价 12.57 元，PE 13.50 倍）"}],
   planIssue:{shares10k:1788,raise10k:22475.16,pe:13.50,note:"发行 1788 万股，募资 2.25 亿，PE 13.50 倍"},
   actualIssue:{price:12.57,shares10k:1788,totalShares10k:7288,raise10k:22475.16,pe:13.50,peTTM:13.50,peStatic:13.50,strategicRatio:15,greenShoeRatio:15,onlineShares10k:1519.80,topCap10k:89.40,lotteryRate:0.0196,subscribeMultiple:5097.55,strategicInvestors:[{name:"中信建投基金-共赢98号员工集合资产管理计划",shares10k:178.80,note:"员工持股计划"},{name:"中信建投投资有限公司",shares10k:89.40,note:"保荐券商跟投"}],applyDate:"2026-08-17",listDate:"2026-08-28",lotSize:100},
   thresholdPreview:{expectedFund:11456.82,threshold:640.76,topThreshold:900,note:"正股门槛 640.76 万，碎股门槛约 900 万；网上获配 0.0196%"},
   financial:{years:[2023,2024,2025],revenue:[50457.29,53698.50,59873.54],netProfit:[8511.50,6179.43,6988.11],netDeducted:[7823.13,5909.94,6787.71]},
-  forecast:{y2026:{revenue:66000,netProfit:8200},y2027:{revenue:73000,netProfit:9500}},
-  comps:[{name:"仙鹤股份",code:"603733",marketCap:95,peTTM:18.2,psTTM:2.6,pe2026E:14.8,pe2027E:11.9}],
+  forecast:{y2026:{revenue:68700,netProfit:7814.51},y2027:{revenue:79000,netProfit:9000}},
+  firstDay:{issuePrice:12.57,open:25.18,close:28.51,high:38.50,low:25.12,turnover:97.03},
+  prospectusUrl:"https://pdf.dfcfw.com/pdf/H2_AN202608131827942242_1.pdf",
+  themes:["特种纸","数码纸基材料","食品包装","专精特新小巨人","环保材料"],
+  comps:[{name:"仙鹤股份",code:"603733",marketCap:95,peTTM:18.2,psTTM:2.6,pe2026E:14.8,pe2027E:11.9},
+         {name:"五洲特纸",code:"605007",marketCap:null,peTTM:null,psTTM:null,pe2026E:null,pe2027E:null},
+         {name:"恒达新材",code:"301469",marketCap:null,peTTM:null,psTTM:null,pe2026E:null,pe2027E:null}],
   brokerQuotes:[{broker:"中介A",rangeLow:24,rangeHigh:26,note:"发行前中介报价 25 元（实际发行价 12.57）",date:"2026-08-25"}],
   deep:{
     business:{overview:"主营数码纸基新材料、水性墨材料、食品包装材料三大板块，是水性功能材料「小巨人」，高克重数码纸基材料市占率领先（约 34%），产品覆盖数码印花、家居装饰印刷、食品包装三大下游。",segments:[{name:"数码印花墨水",field:"服装印花/工艺制品/户外广告",share:52.95,note:"第一大收入来源"},{name:"装饰纸水性印刷墨",field:"家居板材/地板/木门",share:30.08,note:"核心产品"},{name:"特种食品包装原纸",field:"无氟防油纸/环保牛皮纸（连锁餐饮）",share:16.97,note:"下游连锁餐饮"}],revenueStructure:"三大产品线合计构成主营业务，客户分散——前五大客户营收占比长期低于 25%，第一大客户占比不足 10%。",architecture:"总部位于杭州，募投聚焦产能扩容与研发制造体系升级，巩固细分赛道领先地位。",tech:"水性功能材料「小巨人」，高克重数码纸基材料市占率约 34%，技术壁垒在于水性配方与高克重涂布工艺。",customers:"客户分散度高，前五大客户占比长期低于 25%，分布于数码印花、家居装饰、食品包装等多条独立下游赛道，抗单一客户风险能力强。",mode:"以销定产，直销与经销结合。"},
     core:{fullName:"杭州华大海天科技股份有限公司",founded:"2001年6月",regCapital:"5500 万元",legalRep:"",address:"浙江省杭州市",website:"",chairman:"",employees:null,bizScope:"数码纸基新材料、水性墨材料、食品包装材料的研发、生产和销售",mainProducts:["数码纸基新材料","水性墨材料","食品包装材料"]},
     history:[{year:"2026-08-28",event:"北交所上市交易"},{year:"2026-08-17",event:"网上申购（发行价 12.57 元，PE 13.50 倍）"}],
     equity:{controller:"林贤福、吕德水（合计控制发行前 73.79% 股份）",chain:"",shareholders:[],note:"控股股东、实际控制人为林贤福、吕德水。"},
-    financeAnalysis:"2023-2025 年归母净利 8511.50/6179.43/6988.11 万元，同比 +65.17%/-27.40%/+13.09%，2024 年明显下滑后 2025 年企稳回升；营收 5.05/5.37/5.99 亿元稳步增长。扣非净利 7823.13/5909.94/6787.71 万元。2024/2025 加权平均 ROE 为 12.94%/12.99%。",
+    financeAnalysis:"2023-2025 年归母净利 8511.50/6179.43/6988.11 万元，同比 +65.17%/-27.40%/+13.09%，2024 年明显下滑后 2025 年企稳回升；营收 5.05/5.37/5.99 亿元稳步增长。扣非净利 7823.13/5909.94/6787.71 万元。2024/2025 加权平均 ROE 为 12.94%/12.99%。2026 H1 营收 2.99 亿元(+15.45%)、归母净利 3525.07 万元(+24.32%)。",
     industry:{name:"造纸印刷（水性功能材料）",size:"特种纸/数码纸细分市场",growth:"数码印刷、热转印纸渗透率提升",drivers:["热转印纸成长","食品包装原纸需求","环保水性墨替代油性墨"],policy:"环保政策利好水性材料",chainPos:"功能性材料中游，上游纸浆/化工原料，下游印刷/包装企业"},
     competition:"国家级专精特新小巨人，构建多孔结构修饰、温敏粘性等自主核心技术，部分成果鉴定为国际先进、国内领先，热转印数码纸驶入成长快车道。",
     benchmark:"发行 PE 13.50 倍，低于行业平均静态 PE 23.69 倍；对标仙鹤股份（PE(TTM) 18 倍）。",
@@ -728,10 +779,10 @@ C({id:"hdht",code:"920288",name:"华大海天",industry:"造纸印刷",status:"p
       {name:"补充流动资金及偿还银行贷款",invest:3000,detail:""},
       {name:"生产平台数字化提升与智能化建设",invest:3000,detail:""}],
     projectAnalysis:"募资合计 2.25 亿元，核心投向「包装原纸及热转印数码纸技改项目」，配备两条特种纸生产线，第 1 条（衢州东大造纸 2 号线）已于 2024 年建成投产，第 2 条新建线拟用募集资金建设。",
-    profitForecast:"2026/2027E 为测算值，结合募投达产节奏跟踪热转印数码纸与食品包装原纸放量情况。",
+    profitForecast:"公司预计 2026 前三季营收 4.30-4.80 亿元(+8.77%~21.41%)、归母净利 5000-5500 万元(+11.73%~22.90%)；预计 2026 全年营收 6.87 亿元(+14.78%)、归母净利 7814.51 万元(+11.83%)。",
     riskFactors:["2024 年净利同比 -27.40%，业绩波动","可流通老股比例需关注","原材料价格波动","行业竞争加剧"]
   },
-  rating:{stars:3,score:65,note:"题材一般，涨幅预期温和。",updatedAt:"2026-08-26"}}),
+  rating:{stars:4,score:70,note:"首日 +126.81%，超出温和预期。",updatedAt:"2026-08-28"}}),
 
 C({id:"jtgf",code:"920071",name:"金钛股份",industry:"有色金属",status:"pending",
   biz:"高端海绵钛系列产品研发、生产、销售，国内领先、国际一流的高端海绵钛生产基地，2022 年小粒度海绵钛获评「制造业单项冠军产品」（海绵钛行业唯一）。",
@@ -744,6 +795,7 @@ C({id:"jtgf",code:"920071",name:"金钛股份",industry:"有色金属",status:"p
   thresholdPreview:{expectedFund:12966,threshold:412,topThreshold:null,note:"发行结果：网上获配 0.0236%，稳中 1 手约 412 万"},
   financial:{years:[2023,2024,2025],revenue:[168430.63,155920.14,168446.44],netProfit:[12886.26,13692.94,19634.41],netDeducted:[11642.38,12156.61,18476.34]},
   forecast:{y2026:{revenue:185000,netProfit:22500},y2027:{revenue:205000,netProfit:26000}},
+  themes:["钛材","海绵钛","军工新材料","制造业单项冠军","国产替代"],
   comps:[{name:"宝钛股份",code:"600456",marketCap:210,peTTM:24.5,psTTM:2.9,pe2026E:19.8,pe2027E:15.5},
          {name:"西部超导",code:"688122",marketCap:320,peTTM:35.0,psTTM:6.5,pe2026E:28.0,pe2027E:21.0},
          {name:"西部材料",code:"002149",marketCap:78,peTTM:30.0,psTTM:2.2,pe2026E:24.0,pe2027E:19.0}],
@@ -776,7 +828,12 @@ C({id:"hhzn",code:"920289",name:"华汇智能",industry:"智能装备",status:"p
   thresholdPreview:{expectedFund:11856,threshold:820,topThreshold:null,note:"网上获配 0.0216%，稳中 1 手约 820 万"},
   financial:{years:[2023,2024,2025],revenue:[30025.08,42655.78,61561.74],netProfit:[4643.32,6262.32,8042.35],netDeducted:[4623.01,6264.50,8033.22]},
   forecast:{y2026:{revenue:null,netProfit:null},y2027:{revenue:null,netProfit:null}},
-  comps:[],
+  prospectusUrl:"https://pdf.dfcfw.com/pdf/H2_AN202608201828207538_1.pdf",
+  themes:["锂电设备","纳米砂磨机","磷酸铁锂正极材料","专精特新小巨人","国产替代","数控机床"],
+  comps:[{name:"先导智能",code:"300450",marketCap:463,peTTM:50,psTTM:4.5,pe2026E:null,pe2027E:null},
+    {name:"利元亨",code:"688499",marketCap:60,peTTM:108,psTTM:1.75,pe2026E:null,pe2027E:null},
+    {name:"宏工科技",code:"301662",marketCap:83,peTTM:null,psTTM:null,pe2026E:null,pe2027E:null},
+    {name:"中密控股",code:"300470",marketCap:null,peTTM:null,psTTM:null,pe2026E:null,pe2027E:null}],
   brokerQuotes:[],
   deep:{
     business:{overview:"主营高端智能装备及关键部件，形成锂电智能装备、数控机床智能装备、精密机械部件三大产品体系，纳米砂磨机为锂电正负极材料核心设备，客户覆盖湖南裕能、万润新能、贝特瑞、比亚迪、中海油等。",segments:[{name:"锂电智能装备（纳米砂磨机/研磨系统/高效制浆机）",field:"锂电正负极材料（湖南裕能/比亚迪/贝特瑞）",share:null,note:"核心业务，纳米砂磨机收入两年激增24倍"},{name:"数控机床智能装备（数控工具磨床/数控加工中心）",field:"汽车零部件/电子零部件",share:null,note:"第二曲线"},{name:"精密机械部件（机械密封）",field:"工业装备",share:null,note:""}],revenueStructure:"锂电智能装备为营收主力，湖南裕能 2025 年销售占比 82.82%（第一大客户），客户高度集中。",architecture:"总部位于广东东莞，实控人张思沅、张思友（兄弟）合计支配 75.84% 表决权，2024 年挂牌新三板创新层。",tech:"国家级专精特新小巨人，掌握纳米砂磨机核心研磨工艺，锂电材料研磨系统领域品牌知名度较高。",customers:"客户覆盖湖南裕能、万润新能、贝特瑞、比亚迪、中海油等锂电材料龙头与大型央企，湖南裕能 2025 第一大客户占比 82.82%。",mode:"以销定产，定制化智能装备整机交付，租赁场地生产（募投将自建基地）。"},
@@ -791,7 +848,42 @@ C({id:"hhzn",code:"920289",name:"华汇智能",industry:"智能装备",status:"p
     projects:[{name:"东莞市华汇新能源智能装备研发生产项目-生产基地建设项目",invest:29159.46,detail:"项目总投资 4.59 亿，达产后预计年营收 11.21 亿、税后利润 1.42 亿"},{name:"东莞市华汇新能源智能装备研发生产项目-研发中心建设项目",invest:5282.32,detail:""}],
     projectAnalysis:"募资 3.01 亿元全部投向东莞市华汇新能源智能装备研发生产项目（生产基地+研发中心），破解租赁场地产能瓶颈，达产后新增数控工具磨床、高速钻攻加工中心、五轴数控加工中心等产能。",
     profitForecast:"2026 1-9 月预计营收 4.2-4.6 亿元(+2.08%~11.80%)、扣非净利 5800-6400 万元(+5.90%~16.86%)；全年及 2027E 为测算值。",
-    riskFactors:["湖南裕能 2025 第一大客户销售占比 82.82%，客户高度集中","2025 年末资产负债率 67.45%","募投产能消化风险","锂电材料行业资本开支波动"]
+    riskFactors:["湖南裕能 2025 第一大客户销售占比 82.82%，客户高度集中","2025 年末资产负债率 67.45%","募投产能消化风险","锂电材料行业资本开支波动"],
+    topCustomers:[{name:"湖南裕能新能源电池材料股份有限公司",revenue10k:50983.65,share:82.82,note:"2025 第一大客户，研磨系统/砂磨机单机设备/配件维修；2026 战略配售入股"},
+      {name:"东莞市旭锐精密科技有限公司",revenue10k:7316.81,share:11.89,note:"数控机床"},
+      {name:"浙江汉信科技有限公司",revenue10k:417.70,share:0.68,note:"砂磨机单机设备"},
+      {name:"深圳市尚水智能股份有限公司",revenue10k:361.95,share:0.59,note:""},
+      {name:"东莞市诚帆精密五金工具有限公司",revenue10k:349.56,share:0.57,note:""}],
+    topSuppliers:[{name:"广东金力重工机械有限公司",purchase10k:8159.69,share:22.82,note:""},
+      {name:"广东利源机械科技有限公司",purchase10k:5088.22,share:14.23,note:""},
+      {name:"安徽明腾永磁机电设备有限公司",purchase10k:3102.17,share:8.68,note:""},
+      {name:"东莞市康柏工业陶瓷有限公司",purchase10k:2858.19,share:7.99,note:""},
+      {name:"厦门鼎运智能股份有限公司",purchase10k:1399.43,share:3.91,note:""}],
+    industryDeep:"公司所处行业为专用设备制造业（C35），细分赛道为锂电池材料研磨装备与数控机床智能装备。行业增长核心驱动：①下游磷酸铁锂正极材料持续扩产，2023-2025 年行业 CR5 分别约 66.36%/60.00%/54.80%，湖南裕能、万润新能合计市占率约 40.66%/38.00%/36.00%，头部材料厂资本开支直接拉动研磨设备需求；②纳米砂磨机作为锂电正负极材料研磨核心设备，正替代传统砂磨工艺，渗透率提升带来单线设备价值量增长；③数控机床国产替代加速，公司以数控工具磨床、高速钻攻加工中心、五轴数控加工中心切入第二成长曲线；④机械密封件在工业装备中的耗材属性提供稳定需求。公司处于产业链中游装备整机制造环节，上游为机加工件、电机、传动件、陶瓷等原材料，下游为锂电材料厂（湖南裕能/万润新能/贝特瑞）与汽车电子零部件厂。",
+    competitionDeep:"国内锂电池材料研磨装备市场集中度较高，公司凭借纳米砂磨机在磷酸铁锂正极材料研磨领域占据领先地位，主要竞争对手包括国际巨头（如瑞士布勒、德国耐驰等砂磨机厂商）与国内锂电设备龙头。招股书列明的同行业可比公司为先导智能、利元亨、灵鸽科技、龙鑫智能、宏工科技（锂电设备业务）、一通密封、中密控股（机械密封业务）。其中先导智能为锂电整线设备龙头，规模最大但毛利率相对稳定；利元亨聚焦锂电制造设备，2025 年毛利率波动较大（25.06%）；宏工科技聚焦散装物料自动化产线，锂电业务占比约 89%；中密控股为机械密封龙头，毛利率 50% 以上显著高于公司机械密封业务（38.86%）。公司核心优势在于纳米砂磨机细分领域的深度聚焦与客户绑定（湖南裕能 82.82%），风险在于客户集中度过高与产品结构相对单一。"
+  },
+  report:{
+    investmentLogic:"【第一段·行业地位】华汇智能是国内纳米砂磨机领域的国家级专精特新小巨人，深耕智能装备 15 年以上，在磷酸铁锂正极材料研磨系统细分赛道占据领先地位，核心产品纳米砂磨机收入两年激增 24 倍，客户覆盖湖南裕能、万润新能、贝特瑞、比亚迪等锂电材料龙头。【第二段·核心壁垒】公司壁垒在于：①客户壁垒——第一大客户湖南裕能 2025 年销售占比 82.82%，2026 年战略配售入股形成深度资本绑定，产品深度嵌入头部材料厂扩产节奏；②技术壁垒——掌握纳米砂磨机核心研磨工艺，锂电材料研磨系统领域品牌知名度高，产品需经下游产线验证、切换成本高；③国产替代壁垒——对标瑞士布勒、德国耐驰等国际砂磨机厂商，具备性价比与本土服务优势。【第三段·中长期增长】募投 4.59 亿元建设东莞生产基地+研发中心，破解租赁场地产能瓶颈，新增数控工具磨床、高速钻攻加工中心、五轴数控加工中心产能 850 台/年，数控机床+机械密封构成第二、三成长曲线，达产后预计年营收 11.21 亿元。",
+    risks:["客户集中度高的风险：前五大客户销售占比 98.89%/96.90%/96.54%，第一大客户湖南裕能 2025 年占比 82.82%，若主要客户订单减少将对公司经营业绩产生重大不利影响","主要客户业绩下滑的风险：湖南裕能 2023/2024 年业绩下滑、万润新能同期亏损，可能影响对研磨装备的新增需求","募投项目产能消化不及预期的风险：新增数控机床产能 690 台/年+五轴加工中心 160 台/年，对市场开拓能力提出更高要求","产品结构单一风险：营收和毛利主要来源于研磨系统和纳米砂磨机，抗风险能力有待加强","供应商集中度较高的风险：前五大供应商采购占比 75.71%/63.35%/57.64%，原材料供应稳定性存在不确定性","报告期多期经营现金流为负的风险：经营现金流净额 2023/2024 年分别为 -5500.25 万元、-3996.09 万元","新产品研发或推广失败的风险：高效制浆机、数控工具磨床、五轴数控加工中心等新品若研发失败或推广不及预期将影响利润水平"],
+    keyAssumptions:"营收假设：①锂电研磨系统/纳米砂磨机——假设湖南裕能、万润新能等主要客户磷酸铁锂产能扩张按规划落地，且公司维持现有份额，纳米砂磨机渗透率继续提升；②数控机床——假设国产替代逻辑兑现、订单逐步放量，从设备导入期进入批量交付期；③机械密封——假设保持现有耗材复购节奏。毛利率假设：锂电设备行业竞争加剧导致价格承压（公司综合毛利率已从 32.74% 降至 27.92%），假设未来维持稳定或小幅波动；数控机床业务毛利率低于砂磨机，结构变化将拉低综合毛利率。产能假设：募投 2027 年起逐步投产，产能利用率爬坡决定新增折旧摊薄程度。下游景气假设：碳酸锂价格企稳、磷酸铁锂产能利用率维持高位。",
+    marketViews:"市场普遍将华汇智能视为锂电设备周期股，担忧锂电资本开支见顶后业绩下滑。但我们认为：①公司纳米砂磨机属于材料研磨环节的核心工艺设备，而非简单扩产设备，随下游向高压实密度、磷酸锰铁锂等新技术路线演进，研磨设备单线价值量与更新需求仍有结构性增长；②公司客户集中度高是双刃剑——82.82% 依赖湖南裕能看似风险，但裕能作为磷酸铁锂出货量六连冠龙头（2025 年市占约 27%），其资本开支确定性远高于行业平均，且战略配售入股进一步锁定订单；③市场忽略数控机床第二曲线的期权价值，公司以设备厂身份切入数控工具磨床/五轴加工中心，具备制造工艺协同与客户渠道复用优势。",
+    catalysts:"【短期】8 月 28 日前后上市首日表现：发行 PE 14.99 倍 vs 行业 45.26 倍，低估值+小巨人标签或催化上市首日溢价；【短期】中签结果与战略配售名单披露后的市场情绪发酵；【中期】2026 三季报验证 1-9 月业绩指引（营收 4.2-4.6 亿元、归母净利 5800-6400 万元）；【中长期】募投生产基地投产、数控机床订单放量、新客户拓展（贝特瑞/比亚迪等负极与整车环节）、磷酸铁锂新技术路线（磷酸锰铁锂/高压实）带动研磨设备更新需求。",
+    valuation:"估值逻辑：公司处于锂电材料研磨装备细分赛道，赛道稀缺性在于纳米砂磨机国产替代+新材料工艺迭代双逻辑。可比公司选取招股书列明的先导智能（锂电设备龙头）、利元亨、宏工科技及机械密封龙头中密控股，发行 PE 14.99 倍显著低于可比公司估值中枢，具备发行定价安全边际。上市后估值锚定：短期看首日溢价与情绪，中期看数控机床第二曲线兑现带来的估值切换。评级：建议积极关注，具体评级与目标价待上市后结合首日表现与三季报数据更新。",
+    companyOverview:"华汇智能（920289）成立于 2010 年 6 月，总部位于广东东莞，主营高端智能装备及其关键部件的研发、设计、生产和销售，形成锂电智能装备（正极材料研磨系统、纳米砂磨机、高效制浆机）、数控机床智能装备（数控工具磨床、高速钻攻加工中心、五轴数控加工中心）、精密机械部件（机械密封）三大产品体系。公司为国家高新技术企业、国家级专精特新小巨人，深耕智能装备行业 15 年以上，在锂电池材料研磨系统领域品牌知名度较高，下游客户覆盖湖南裕能、万润新能、贝特瑞、比亚迪等锂电材料龙头。公司 2024 年挂牌新三板创新层，2026 年 8 月 24 日北交所网上申购，发行价 17.71 元，发行 PE 14.99 倍。",
+    companyHistory:"2010-06-22：公司成立（广东东莞）；2020 年：成功推出纳米砂磨机产品并获下游客户认可，开启高速成长；2024-06-24：挂牌新三板创新层；2026-08-13：招股说明书注册稿披露；2026-08-24：北交所网上申购（发行价 17.71 元，PE 14.99 倍）；2026-08-26：发行结果公告（网上获配 0.0216%，有效申购 4632.72 倍）。",
+    productTable:"主营产品体系：①锂电智能装备——高效正极材料研磨系统（整线系统）、纳米砂磨机（单机设备，核心产品，收入两年激增 24 倍）、高效制浆机；②数控机床智能装备——数控工具磨床、高速钻攻加工中心、五轴数控加工中心（募投新增产能 850 台/年）；③精密机械部件——机械密封（耗材属性，对标中密控股、一通密封）。",
+    equityStructure:"实际控制人为张思沅、张思友（兄弟关系），合计支配公司 75.84% 股份表决权：张思沅直接及间接支配 67.16%（控股股东、董事长/总经理），张思友持股 8.67%（董事/副总经理），双方签署一致行动协议，意见不一致时以张思沅为准。股权结构亮点：湖南裕能（第一大客户）通过战略配售入股 169.3958 万股（限售 6 个月），实现客户资本绑定；员工持股计划（广发蓓绽·华汇智能战略配售1号）获配 170.0002 万股（限售 12 个月）；保荐券商国泰海通跟投 85.0001 万股。",
+    financialHistory:"2023-2025 年营收 3.00/4.27/6.16 亿元，归母净利 4643.32/6262.32/8042.35 万元（同比 +74.75%/+34.87%/+28.42%），扣非净利 4623.01/6264.50/8033.22 万元，业绩持续高增长。2023 年营收同比增长主要受益纳米砂磨机放量；2024 年增长来自砂磨机单机收入扩大与制浆机/机床业务陆续确认收入；2025 年研磨系统和智能数控机床收入增长带动营收大幅增长。2026 上半年营收 3.57 亿元（同比小幅增长）、净利 5360.45 万元（同比 +10.53%），增速阶段性放缓，反映锂电设备行业竞争加剧。2025 年末资产负债率 67.45% 偏高，主要因经营规模扩张与应收款项增加。",
+    revenueStructure:"分产品结构：锂电智能装备为营收绝对主力，其中纳米砂磨机/研磨系统贡献主要收入；数控机床智能装备 2024 年起陆续确认收入，占比逐步提升；精密机械部件（机械密封）提供稳定补充。分地区结构：以境内销售为主（直销 100%），暂未形成显著海外收入；下游高度集中于锂电池材料行业。",
+    profitability:"报告期综合毛利率 32.74%/31.67%/27.92%，逐年下滑：一方面受锂电材料设备行业竞争加剧及 2023 年碳酸锂价格下跌影响，设备价格与毛利空间受挤压；另一方面 2024 年起制浆设备与机床设备收入确认（毛利率低于砂磨机），产品结构变化拉低综合毛利率。期间费用方面，公司以直销为主，销售费用率与研发费用率相对可控；净利率随规模效应与毛利率下滑此消彼长，2025 年净利率约 13.07%。",
+    industryDef:"公司所处行业为专用设备制造业（C35），细分赛道为锂电池材料研磨装备与数控机床智能装备。完整产业链：上游为机加工件、定制设备、电机及变频控制件、传动类、钢材、仪表电子元器件等原材料；中游为智能装备整机制造（公司所处环节，负责研发设计、装配调试与客户产线集成）；下游为锂电池正负极材料厂（湖南裕能、万润新能、贝特瑞等）、汽车零部件厂与电子零部件厂。",
+    marketSize:"据招股书披露及行业资料，国内砂磨机市场规模随锂电行业快速发展而快速增长，2024 年国内锂电用砂磨机市场约 28 亿元，预计 2030 年突破 80 亿元。增长驱动核心落脚点：①下游锂电材料行业景气——磷酸铁锂正极材料 CR5 约 54.80%，头部材料厂扩产直接带动研磨设备需求；②纳米砂磨机对传统砂磨工艺的替代，提升单线设备价值量；③数控机床国产替代，国内高端五轴加工中心市场持续扩容；④机械密封件耗材复购需求稳定。",
+    competitionLandscape:"全球市场：砂磨机高端市场长期由瑞士布勒、德国耐驰等国际厂商主导，公司在纳米级研磨工艺上实现国产突破，具备性价比与本土化服务优势。国内市场：锂电池材料研磨装备领域，公司与同行业可比公司先导智能、利元亨、宏工科技等竞争，先导智能为锂电整线设备龙头（规模最大），利元亨聚焦锂电制造设备，宏工科技聚焦散装物料自动化产线（锂电业务占比约 89%）；机械密封领域对标中密控股（毛利率 50%+，行业龙头）与一通密封，公司机械密封毛利率 38.86% 略低于龙头。公司差异化定位：纳米砂磨机细分深度聚焦+锂电正极材料头部客户深度绑定。",
+    competitiveness:"①产品与技术壁垒：国家级专精特新小巨人，掌握纳米砂磨机核心研磨工艺，产品经下游产线长期验证，切换成本高；②客户壁垒：湖南裕能 2025 年销售占比 82.82%，2026 年战略配售入股深度绑定，万润新能、贝特瑞等头部客户覆盖；③资质与认证：高新技术企业、锂电材料头部厂商合格供应商资质；④产能布局：募投自建生产基地破解租赁产能瓶颈，为数控机床等新产品放量提供支撑；⑤服务能力：直销模式贴近客户，提供产线级系统解决方案（研磨系统整线交付）。",
+    growthPoints:"①现有产能：租赁场地生产，产能利用率处于高位，是制约收入增长的主要瓶颈；②募投项目（总投资 4.59 亿元）：生产基地建设项目 2.92 亿元+研发中心 0.53 亿元，达产后新增数控工具磨床、高速钻攻加工中心 690 台/年、五轴数控加工中心 160 台/年，达产后预计年营收 11.21 亿元、税后利润 1.42 亿元；③第二成长曲线：数控机床智能装备国产替代放量；④新客户与新市场：向负极材料（贝特瑞）、整车及零部件环节延伸，探索海外市场；⑤产业链延伸：机械密封件耗材复购与后市场服务。",
+    comparableAnalysis:"招股书列明可比公司：先导智能（300450，锂电整线设备龙头，2025 年营收 144.43 亿元，毛利率约 34.73%）、利元亨（688499，锂电制造设备，2025 年营收 30.77 亿元，毛利率 25.06%，2026 上半年扭亏为盈净利 3895 万元）、宏工科技（301662，散装物料自动化产线，锂电业务占比约 89%）、中密控股（300470，机械密封龙头，毛利率 50%+）。对比结论：公司营收规模（6.16 亿元）显著小于先导智能等龙头，但成长性更优（2025 年营收增速 44.32% 高于可比公司）；毛利率 27.92% 低于先导智能但高于利元亨；净利率约 13% 高于行业平均；ROE 受高资产负债率影响中等偏上；研发费用率低于行业龙头，需关注持续创新投入。总体看，公司为细分赛道高成长、高集中度标的，盈利质量与规模弱于龙头但弹性更大。",
+    profitModel:"盈利预测逻辑框架（不输出数值）：①锂电研磨系统/纳米砂磨机收入=下游头部材料厂（裕能/万润等）新增及技改产能×单线研磨设备价值量×公司市占率，核心假设为下游扩产节奏与渗透率提升；②数控机床收入=设备销量×均价，假设国产替代放量从导入期进入爬坡期；③机械密封收入=存量设备配套+耗材复购，假设增速与工业活动景气度挂钩；④毛利率假设：砂磨机毛利率随竞争加剧小幅下行，数控机床毛利率低基数上随规模提升，综合毛利率取决于产品结构；⑤费用率假设：研发投入持续加码，销售费用率随规模摊薄；⑥利润=收入-成本-费用，叠加募投转固后的折旧摊销增量。",
+    riskSection:"①客户集中度高的风险：前五大客户销售占比超 96%，第一大客户湖南裕能占比 82.82%，若主要客户减少采购或经营恶化，将直接影响收入与盈利；②主要客户业绩下滑风险：湖南裕能、万润新能近年业绩承压，可能放缓设备采购；③募投产能消化不及预期风险：新增数控机床产能 850 台/年，若市场开拓不及预期将面临产能闲置与折旧压力；④产品结构单一风险：营收毛利高度依赖研磨系统与纳米砂磨机，抗风险能力有待加强；⑤供应商集中风险：前五大供应商采购占比最高达 75.71%，原材料供应与价格波动影响生产经营；⑥经营现金流风险：报告期多期经营现金流为负，回款周期长、资金链存在压力；⑦研发创新风险：数控机床等新产品研发或推广失败将影响利润水平与第二曲线兑现。"
   },
   rating:{stars:4,score:73,note:"锂电装备小巨人+低 PE，关注上市首日表现。",updatedAt:"2026-08-27"}}),
 
@@ -937,15 +1029,15 @@ C({id:"txjm",code:"920370",name:"腾信精密",industry:"精密制造",status:"r
   },
   comps:[],brokerQuotes:[],rating:{stars:3,score:62,note:"",updatedAt:null}}),
 
-C({id:"bmk",code:"920380",name:"百迈科",industry:"医疗器械",status:"registered",
-  biz:"医疗器械（可吸收免打结缝线等）的研发、生产和销售。",
-  highlights:["门槛约 800 万","可吸收免打结缝线细分赛道"],
-  risks:["碎股抢时间","募投产能消化承压"],
-  tags:["预计下周发行"],isXiaoJuren:true,
-  timeline:[{d:"2026-08-25",e:"二次注册公告"}],
-  planIssue:{shares10k:1800,raise10k:30600,pe:15.0,note:"拟募资 3.06 亿"},
-  actualIssue:{price:null,shares10k:1800,totalShares10k:7200,raise10k:30600,pe:15.0,peTTM:null,peStatic:null,strategicRatio:10,greenShoeRatio:15,onlineShares10k:1620,topCap10k:97,applyDate:"",listDate:"",lotSize:100},
-  thresholdPreview:{expectedFund:7000,threshold:800,topThreshold:880,note:"碎股抢时间"},
+C({id:"bmk",code:"920268",name:"百迈科",industry:"医疗器械",status:"issuing",
+  biz:"海南百迈科医疗科技，主营可吸收免打结缝线等医疗器械，产品用于外科手术缝合，海南自贸港医疗器械标杆企业。",
+  highlights:["发行 PE 14.99 倍，低于行业 28.18 倍、可比 37.16 倍","战投引入海南自贸港建设投资基金，区域产业资本加持"],
+  risks:["不安排超额配售（绿鞋 0）","募投产能消化承压（扩产 1.5 倍）"],
+  tags:["申购中"],isXiaoJuren:true,
+  timeline:[{d:"2026-08-31",e:"网上申购（发行价 17.10 元，PE 14.99 倍）"},{d:"2026-08-27",e:"披露发行公告"}],
+  planIssue:{shares10k:1355,raise10k:23170.50,pe:14.99,note:"发行 1355 万股，募资 2.32 亿（净额 2.05 亿），PE 14.99 倍"},
+  actualIssue:{price:17.10,shares10k:1355,totalShares10k:5420,raise10k:23170.50,pe:14.99,peTTM:13.09,peStatic:14.99,strategicRatio:30,greenShoeRatio:0,onlineShares10k:948.5,topCap10k:47.42,strategicInvestors:[{name:"海南自由贸易港建设投资基金有限公司",shares10k:203.25,note:"限售6个月"},{name:"深圳市长城证券投资有限公司",shares10k:67.75,note:"保荐券商跟投（限售12个月）"},{name:"招商资管百迈科员工参与北交所战略配售集合资产管理计划",shares10k:135.5,note:"员工持股计划（限售12个月）"}],applyDate:"2026-08-31",listDate:"",lotSize:100},
+  thresholdPreview:{expectedFund:8110,threshold:810.88,topThreshold:810.88,note:"顶格 47.42 万股 ≈ 810.88 万，全员碎股"},
   deep:{
     business:{overview:"主营可吸收免打结缝线等医疗器械，实控人杨顶建，募投新增缝线产能 400 万根。",segments:[{name:"可吸收免打结缝线",field:"外科手术",share:null,note:"核心业务"}],revenueStructure:"以可吸收免打结缝线为主（具体占比以招股书披露为准）。",architecture:"海南定安，实控人杨顶建，第一大股东海南迈迪科（48.35%）。",tech:"可吸收缝线材料与免打结设计工艺。",customers:"下游医疗机构/器械经销商为主。",mode:"以销定产，经销+直销结合。"},
     core:{fullName:"百迈科",founded:"2007年6月",regCapital:"579.38 万元",legalRep:"杨顶建",address:"海南省定安县定城镇见龙社区环城南三环路 18 号",website:"",chairman:"杨顶建",employees:null,bizScope:"医疗器械的研发、生产与销售",mainProducts:["可吸收免打结缝线"]},
@@ -954,11 +1046,11 @@ C({id:"bmk",code:"920380",name:"百迈科",industry:"医疗器械",status:"regis
     industry:{name:"医疗器械",size:"可吸收缝线细分市场",growth:"医疗耗材国产替代",drivers:["可吸收缝线替代传统缝线","医疗耗材国产化"],policy:"医疗器械创新支持",chainPos:"医疗器械制造，下游医院/经销商"},
     competition:"可吸收免打结缝线细分赛道，公司计划扩产并布局鱼骨线、抗菌缝线等。",
     growthDrivers:["免打结缝线扩产（新增 400 万根）","鱼骨线等新产品","国产替代"],
-    projects:[{name:"海南百迈科先进医疗器械项目",invest:30600,detail:"募资 3.06 亿元，扩充可吸收免打结缝线产能 400 万根"}],
-    projectAnalysis:"募资 3.06 亿元投向海南百迈科先进医疗器械项目，计划新增可吸收免打结缝线产能 400 万根，达产后合计产能 655 万根（增幅超 1.5 倍），并布局鱼骨线、抗菌缝线；需关注产能消化与向子公司采购设备的合理性。",
-    riskFactors:["募投产能消化承压（扩产 1.5 倍）","碎股抢时间","产品注册审批"]
+    projects:[{name:"海南百迈科先进医疗器械项目",invest:23170.50,detail:"募资总额 2.32 亿（净额 2.05 亿），扩充可吸收免打结缝线产能 400 万根"}],
+    projectAnalysis:"实际募资 2.32 亿元（净额 2.05 亿，较原计划 3.06 亿少募约 1 亿）投向海南百迈科先进医疗器械项目，计划新增可吸收免打结缝线产能 400 万根，达产后合计产能 655 万根（增幅超 1.5 倍），并布局鱼骨线、抗菌缝线；需关注产能消化与向子公司采购设备的合理性。",
+    riskFactors:["募投产能消化承压（扩产 1.5 倍）","不安排超额配售","产品注册审批"]
   },
-  comps:[],brokerQuotes:[],rating:{stars:3,score:61,note:"",updatedAt:null}}),
+  comps:[],brokerQuotes:[],rating:{stars:3,score:62,note:"低 PE + 自贸港产业资本，8-31 申购。",updatedAt:"2026-08-28"}}),
 
 C({id:"ylsz",code:"920390",name:"原力数字",industry:"数字内容",status:"submitted",
   biz:"3D 数字内容（3D 数字资产、数字内容制作）的研发与制作。",
@@ -1448,6 +1540,8 @@ function renderDetail(){
   const st=STAGE[c.status];
   const canE=canEdit();
   const starWidget=`<span class="stars" ${canE?'data-act="rate"':''}>${[1,2,3,4,5].map(i=>`<span ${canE?`data-v="${i}"`:''} class="${i<=c.rating.stars?'on':''}">★</span>`).join("")}</span>`;
+  const psBtn = c.prospectusUrl?`<a class="ps-btn" href="${esc(c.prospectusUrl)}" target="_blank" rel="noopener">📄 打开招股说明书</a>`:
+    `<a class="ps-btn" href="https://search.bse.cn/?keyword=${encodeURIComponent(c.name)}" target="_blank" rel="noopener">🔍 搜招股说明书</a>`;
   $("#detailRoot").innerHTML=`
   <div class="back" onclick="go('dashboard')">← 返回看板</div>
   <div class="card">
@@ -1462,6 +1556,8 @@ function renderDetail(){
       </div>
     </div>
     ${c.tags.length?`<div class="tags" style="margin-top:10px">${c.tags.map(t=>`<span class="tag ${['重点跟踪','申购中','已上市'].includes(t)?'hl':''}">${esc(t)}</span>`).join("")}</div>`:""}
+    ${c.themes.length?`<div class="themes" style="margin-top:8px"><span class="themes-label">🔥 热门主题：</span>${c.themes.map(t=>`<span class="tag theme-tag">${esc(t)}</span>`).join("")}</div>`:""}
+    <div style="margin-top:12px">${psBtn}</div>
   </div>
 
   <nav class="anchor-nav">
@@ -1470,9 +1566,11 @@ function renderDetail(){
     <a href="#issue">发行方案</a>
     <a href="#threshold">门槛测算</a>
     <a href="#valuation">估值对比</a>
+    <a href="#newissue">新股测算</a>
     <a href="#firstday">首日复盘</a>
-    <a href="#broker">中介报价</a>
+    <a href="#darkpool">暗盘</a>
     <a href="#rating">研判</a>
+    <a href="#report">深度报告</a>
   </nav>
 
   ${renderTimeline(c)}
@@ -1483,16 +1581,19 @@ function renderDetail(){
   ${renderActualIssue(c)}
   ${renderThreshold(c)}
   ${renderValuation(c)}
+  ${renderNewIssueCalc(c)}
   ${renderForward(c)}
   ${renderAnnounce(c)}
   ${renderFirstDay(c)}
-  ${renderBroker(c)}
+  ${renderDarkPool(c)}
   ${renderRatingForm(c)}
+  ${renderReport(c)}
   `;
   // 绑定评分滑块
   const sc=$("#scoreSlider");
   if(sc){ sc.addEventListener("input",e=>{ $("#scoreVal").textContent=e.target.value; }); }
-  bindThreshold();
+  try{ bindThreshold(); }catch(e){}
+  try{ bindNewIssueCalc(); }catch(e){}
 }
 function renderTimeline(c){
   if(!c.timeline.length) return "";
@@ -1536,6 +1637,20 @@ function renderDeep(c){
       ${biz.mode?`<p class="deep-p" style="margin-top:8px"><b>生产与销售模式：</b>${esc(biz.mode)}</p>`:""}
     </div>`);
   }
+  // 2.x 前五大客户
+  const tc=(d.topCustomers||[]).filter(x=>x&&x.name);
+  if(tc.length){
+    s.push(`<div id="deep-tc"><div class="deep-h3">二·1 前五大客户</div>
+      <div class="table-wrap"><table><thead><tr><th>客户名称</th><th>销售额(万元)</th><th>占比</th><th>说明</th></tr></thead><tbody>${tc.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.revenue10k!=null?fmtNum(x.revenue10k,0):"—"}</td><td>${x.share!=null?fmtNum(x.share,2)+"%":"—"}</td><td style="white-space:normal">${esc(x.note||"")}</td></tr>`).join("")}</tbody></table></div>
+      <div class="tiny" style="margin-top:4px">数据来源：招股说明书「主要客户」章节。</div></div>`);
+  }
+  // 2.x 前五大供应商
+  const ts=(d.topSuppliers||[]).filter(x=>x&&x.name);
+  if(ts.length){
+    s.push(`<div id="deep-ts"><div class="deep-h3">二·2 前五大供应商</div>
+      <div class="table-wrap"><table><thead><tr><th>供应商名称</th><th>采购额(万元)</th><th>占比</th><th>说明</th></tr></thead><tbody>${ts.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.purchase10k!=null?fmtNum(x.purchase10k,0):"—"}</td><td>${x.share!=null?fmtNum(x.share,2)+"%":"—"}</td><td style="white-space:normal">${esc(x.note||"")}</td></tr>`).join("")}</tbody></table></div>
+      <div class="tiny" style="margin-top:4px">数据来源：招股说明书「主要供应商」章节。</div></div>`);
+  }
 
   // 三、发展沿革
   if(d.history&&d.history.length){
@@ -1569,10 +1684,18 @@ function renderDeep(c){
       ${ind.policy?`<p class="deep-p" style="margin-top:6px"><b>政策环境：</b>${esc(ind.policy)}</p>`:""}
     </div>`);
   }
+  // 六·补充 行业深度分析（长文）
+  if(d.industryDeep){
+    s.push(`<div id="deep-industry-deep"><div class="deep-h3">六·补充 行业深度分析</div><div class="deep-para">${esc(d.industryDeep)}</div></div>`);
+  }
 
   // 七、行业竞争格局
   if(d.competition){
     s.push(`<div id="deep-compete"><div class="deep-h3">七、行业竞争格局</div><p class="deep-p">${esc(d.competition)}</p></div>`);
+  }
+  // 七·补充 竞争格局深度分析（长文）
+  if(d.competitionDeep){
+    s.push(`<div id="deep-compete-deep"><div class="deep-h3">七·补充 竞争格局深度分析</div><div class="deep-para">${esc(d.competitionDeep)}</div></div>`);
   }
 
   // 八、可比公司对标
@@ -1623,7 +1746,9 @@ const ROW_FIELDS={
   history:[{k:"year",ph:"年份/日期"},{k:"event",ph:"事件描述",wide:1}],
   shareholders:[{k:"name",ph:"股东名称",wide:1},{k:"ratio",ph:"持股%"},{k:"note",ph:"说明"}],
   projects:[{k:"name",ph:"项目名称",wide:1},{k:"invest",ph:"投入(万元)"},{k:"detail",ph:"说明",wide:1}],
-  segments:[{k:"name",ph:"业务/产品线",wide:1},{k:"field",ph:"应用领域/客户"},{k:"share",ph:"收入占比%"},{k:"note",ph:"说明",wide:1}]
+  segments:[{k:"name",ph:"业务/产品线",wide:1},{k:"field",ph:"应用领域/客户"},{k:"share",ph:"收入占比%"},{k:"note",ph:"说明",wide:1}],
+  topCustomers:[{k:"name",ph:"客户名称",wide:1},{k:"revenue10k",ph:"销售额(万元)"},{k:"share",ph:"占比%"},{k:"note",ph:"说明",wide:1}],
+  topSuppliers:[{k:"name",ph:"供应商名称",wide:1},{k:"purchase10k",ph:"采购额(万元)"},{k:"share",ph:"占比%"},{k:"note",ph:"说明",wide:1}]
 };
 function renderDeepEditor(c){
   const d=c.deep||{}, core=d.core||{}, eq=d.equity||{}, ind=d.industry||{}, biz=d.business||{};
@@ -1691,9 +1816,16 @@ function renderDeepEditor(c){
     </div>
     <div class="field" style="margin-top:8px"><label>核心驱动因素（每行一个）</label>${lines("industry.drivers",ind.drivers,"每行一个驱动因素")}</div>
     <div class="field" style="margin-top:8px"><label>政策环境</label>${ta("industry.policy",ind.policy,"政策环境")}</div>
+    <div class="field" style="margin-top:8px"><label>行业深度分析（长文，可多段）</label>${ta("industryDeep",d.industryDeep,"从招股书梳理：行业定义、市场规模、增长驱动、下游景气等深度分析，每行一段", "150px")}</div>
 
     <label class="sec">七、行业竞争格局</label>
     ${ta("competition",d.competition,"竞争格局与壁垒", "90px")}
+    <div class="field" style="margin-top:8px"><label>竞争格局深度分析（长文）</label>${ta("competitionDeep",d.competitionDeep,"全球+国内竞争格局、主要对手优劣势对比、公司赛道定位，每行一段", "150px")}</div>
+
+    <label class="sec">二·补充 前五大客户（名称 / 销售额万元 / 占比% / 说明）</label>
+    ${rowHTML("topCustomers",d.topCustomers)}
+    <label class="sec" style="margin-top:12px">二·补充 前五大供应商（名称 / 采购额万元 / 占比% / 说明）</label>
+    ${rowHTML("topSuppliers",d.topSuppliers)}
 
     <label class="sec">八、同行业可比公司对标</label>
     ${ta("benchmark",d.benchmark,"对标逻辑与估值锚定", "90px")}
@@ -1738,6 +1870,8 @@ function saveDeepEdit(id){
   if(!d.equity) d.equity={}; d.equity.shareholders=collectRows("shareholders",["name","ratio","note"]);
   d.projects=collectRows("projects",["name","invest","detail"]);
   if(!d.business) d.business={}; d.business.segments=collectRows("segments",["name","field","share","note"]);
+  d.topCustomers=collectRows("topCustomers",["name","revenue10k","share","note"]);
+  d.topSuppliers=collectRows("topSuppliers",["name","purchase10k","share","note"]);
   // 类型修正
   if(d.core){ const e=d.core.employees; d.core.employees=(e===""||e==null||isNaN(+e))?null:+e; }
   if(d.equity.shareholders) d.equity.shareholders=d.equity.shareholders.map(x=>({name:x.name,ratio:x.ratio!==""?+x.ratio:null,note:x.note}));
@@ -1754,7 +1888,8 @@ function renderFundamental(c){
   </div>`;
 }
 function renderFinancial(c){
-  const f=c.financial; if(!f.years.length) return "";
+  const f=c.financial||{}; if(!f.years||!f.years.length) return "";
+  const fc=c.forecast||{}; const y26=fc.y2026||{}, y27=fc.y2027||{};
   const rows=f.years.map((y,i)=>{
     const rp=i>0 && f.revenue[i-1]? (f.revenue[i]/f.revenue[i-1]-1):null;
     const np=i>0 && f.netProfit[i-1]? (f.netProfit[i]/f.netProfit[i-1]-1):null;
@@ -1764,12 +1899,13 @@ function renderFinancial(c){
   return `<div class="card" id="financial"><h2>财务情况</h2>
   <div class="table-wrap"><table>
     <thead><tr><th>年度</th><th>营业收入</th><th>营收同比</th><th>归母净利润</th><th>净利同比</th><th>扣非净利润</th></tr></thead>
-    <tbody>${rows}${add("2026",c.forecast.y2026)}${add("2027",c.forecast.y2027)}</tbody></table></div>
+    <tbody>${rows}${add("2026",y26)}${add("2027",y27)}</tbody></table></div>
   ${renderGrowthSpace(c)}
   </div>`;
 }
 function renderGrowthSpace(c){
-  const np26=c.forecast.y2026.netProfit, np27=c.forecast.y2027.netProfit;
+  const fc=c.forecast||{}; const y26=fc.y2026||{}, y27=fc.y2027||{};
+  const np26=y26.netProfit, np27=y27.netProfit;
   const cap=c.actualIssue.totalShares10k && c.actualIssue.price? c.actualIssue.totalShares10k*10000*c.actualIssue.price/1e8 : null; // 亿
   if(np26==null && np27==null) return "";
   let html="<h3 style='margin-top:14px'>盈利预测与增长空间测算</h3>";
@@ -1868,25 +2004,47 @@ function calcThResult(){
 }
 function renderValuation(c){
   if(!c.comps.length) return "";
-  return `<div class="card" id="valuation"><h2>可比公司估值对比</h2>
+  const comps=c.comps.filter(x=>x&&x.name);
+  const avg=(arr)=>arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:null;
+  const med=(arr)=>{ const a=arr.slice().sort((x,y)=>x-y); if(!a.length) return null; const m=Math.floor(a.length/2); return a.length%2?a[m]:(a[m-1]+a[m])/2; };
+  const col=(key)=>comps.map(x=>x[key]).filter(v=>v!=null&&!isNaN(v));
+  const rowT=(label,key,fmt,unit)=>{
+    const vals=col(key); if(!vals.length) return "";
+    return `<tr><td><b>${label}</b></td><td>—</td><td>${fmt(avg(vals))}</td><td>${fmt(med(vals))}</td><td>${unit?unit:""}</td><td>—</td><td>—</td></tr>`;
+  };
+  const avgPe=avg(col("peTTM"));
+  const issuePe=c.actualIssue.peTTM||c.actualIssue.pe||null;
+  const peDiff = avgPe!=null && issuePe!=null ? ((issuePe-avgPe)/avgPe) : null;
+  const warn = comps.length<3 ? `<div class="warn-line">⚠️ 可比公司仅 ${comps.length} 家（建议 ≥3 家，可参考招股说明书「同行业可比公司」章节补充）</div>` : "";
+  return `<div class="card" id="valuation"><h2>可比公司估值对比 <span class="cnt">${comps.length} 家</span></h2>
   <div class="table-wrap"><table>
     <thead><tr><th>可比公司</th><th>代码</th><th>市值(亿)</th><th>PE(TTM)</th><th>PS(TTM)</th><th>2026E PE</th><th>2027E PE</th></tr></thead>
-    <tbody>${c.comps.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.code||"—"}</td><td>${x.marketCap!=null?fmtNum(x.marketCap,0):"—"}</td><td>${x.peTTM!=null?fmtNum(x.peTTM,1):"—"}</td><td>${x.psTTM!=null?fmtNum(x.psTTM,1):"—"}</td><td>${x.pe2026E!=null?fmtNum(x.pe2026E,1):"—"}</td><td>${x.pe2027E!=null?fmtNum(x.pe2027E,1):"—"}</td></tr>`).join("")}
+    <tbody>
+      ${comps.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.code||"—"}</td><td>${x.marketCap!=null?fmtNum(x.marketCap,0):"—"}</td><td>${x.peTTM!=null?fmtNum(x.peTTM,1):"—"}</td><td>${x.psTTM!=null?fmtNum(x.psTTM,1):"—"}</td><td>${x.pe2026E!=null?fmtNum(x.pe2026E,1):"—"}</td><td>${x.pe2027E!=null?fmtNum(x.pe2027E,1):"—"}</td></tr>`).join("")}
+      ${rowT("平均值","marketCap",v=>fmtNum(v,0))}${rowT("平均值","peTTM",v=>fmtNum(v,1),"x")}${rowT("平均值","psTTM",v=>fmtNum(v,1),"x")}
     </tbody></table></div>
-  <div class="tiny" style="margin-top:8px">用于给发行定价做锚：若发行 PE(TTM) 显著低于可比公司，则具备安全边际。</div></div>`;
+  ${issuePe!=null&&avgPe!=null?`<div class="result-box" style="margin-top:10px">
+    <div class="row"><span>可比公司平均 PE(TTM)</span><b>${fmtNum(avgPe,1)}x</b></div>
+    <div class="row"><span>公司发行 PE${c.actualIssue.peTTM?'(TTM)':'(静态)'}</span><b class="red">${fmtNum(issuePe,1)}x</b></div>
+    <div class="row"><span>发行 PE vs 可比均值</span>${peDiff<0?`<b class="down">${fmtPct(peDiff,1)}（折价）</b>`:`<b class="up">+${fmtPct(Math.abs(peDiff),1)}（溢价）</b>`}</div>
+  </div>`:""}
+  ${warn}
+  <div class="tiny" style="margin-top:8px">可比公司选自招股说明书「同行业可比公司」章节；若发行 PE(TTM) 显著低于可比公司均值，则具备安全边际。</div></div>`;
 }
 function renderForward(c){
-  const a=c.actualIssue;
+  const a=c.actualIssue||{};
   if(!a.price) return "";
   const peStatic=a.peStatic||a.pe||null;
-  const f26=c.forecast.y2026.netProfit, f27=c.forecast.y2027.netProfit;
+  const fc=c.forecast||{}; const y26=fc.y2026||{}, y27=fc.y2027||{};
+  const f26=y26.netProfit, f27=y27.netProfit;
   const totalShares=a.totalShares10k? a.totalShares10k*10000 : (a.shares10k? a.shares10k*10000:null);
-  const npNow=c.financial.netProfit.length? c.financial.netProfit[c.financial.netProfit.length-1]:null;
+  const fin=c.financial||{};
+  const npNow=fin.netProfit&&fin.netProfit.length? fin.netProfit[fin.netProfit.length-1]:null;
   const mcap=totalShares? totalShares*a.price:null;
   // PE/PS 统一为元口径：净利/营收均为万元，需 ×1e4
   const peTTM_now=npNow&&mcap? mcap/(npNow*1e4):null;
   const pe26=f26&&mcap? mcap/(f26*1e4):null, pe27=f27&&mcap? mcap/(f27*1e4):null;
-  const psNow=c.financial.revenue.length&&mcap? mcap/(c.financial.revenue[c.financial.revenue.length-1]*1e4):null;
+  const psNow=fin.revenue&&fin.revenue.length&&mcap? mcap/(fin.revenue[fin.revenue.length-1]*1e4):null;
   return `<div class="card"><h2>上市首日表 PE（静态 + 实时前瞻）</h2>
   <div class="kv">
     <div class="item"><div class="k">发行市值(亿)</div><div class="v">${mcap?fmtNum(mcap/1e8,1):"—"}</div></div>
@@ -1897,6 +2055,68 @@ function renderForward(c){
     <div class="item"><div class="k">2027E 前瞻PE</div><div class="v">${pe27?fmtNum(pe27,1)+"x":"—"}</div></div>
   </div>
   <div class="tiny" style="margin-top:8px">静态发行 PE 与实时 PE(TTM)/前瞻 PE 并列，锚定发行定价与二级市场估值差。</div></div>`;
+}
+function renderNewIssueCalc(c){
+  if(c.status==="listed") return "";
+  const a=c.actualIssue||{}, fin=c.financial||{};
+  const totalShares10k = a.totalShares10k||a.shares10k||null;
+  const flowShares10k = a.onlineShares10k||null;
+  const npW = fin.netProfit&&fin.netProfit.length? fin.netProfit[fin.netProfit.length-1]:null;
+  if(!totalShares10k||!npW){
+    return `<div class="card" id="newissue"><h2>新股估值测算</h2><div class="tiny">需先在「发行方案」中补充总股本与财务数据后可用。</div></div>`;
+  }
+  const avgPe=(()=>{ const v=(c.comps||[]).map(x=>x&&x.peTTM).filter(v=>v!=null&&!isNaN(v)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  return `<div class="card" id="newissue"><h2>新股估值测算 <span class="tiny">输入任一数据自动算其他</span></h2>
+  <div class="tiny" style="margin-bottom:8px">总股本 ${fmtNum(totalShares10k,0)} 万股${flowShares10k?` · 网上流通 ${fmtNum(flowShares10k,0)} 万股`:""} · 最新归母净利 ${fmtW(npW)}。输入 <b>股价 / 市盈率 / 总市值 / 流通市值</b> 任一，自动反算其余三项并对比可比公司平均 PE。</div>
+  <div class="grid2">
+    <div class="field"><label>股价(元)</label><input type="number" id="nv_price" step="0.01" placeholder="输入任一即可"></div>
+    <div class="field"><label>市盈率 PE(倍)</label><input type="number" id="nv_pe" step="0.01" placeholder="静态口径"></div>
+    <div class="field"><label>总市值(亿元)</label><input type="number" id="nv_mcap" step="0.01" placeholder="输入任一即可"></div>
+    <div class="field"><label>流通市值(亿元)</label><input type="number" id="nv_flow" step="0.01" placeholder="输入任一即可"></div>
+  </div>
+  <div id="nv_result"></div>
+  ${avgPe!=null?`<div class="tiny" style="margin-top:8px">对标：可比公司平均 PE(TTM) ≈ <b class="red">${fmtNum(avgPe,1)}x</b>（${(c.comps||[]).length} 家）</div>`:""}
+  <div class="tiny" style="margin-top:4px">注：流通市值以网上发行股数近似（未考虑老股转售/绿鞋）；PE 为静态口径（最新归母净利）。</div>
+  </div>`;
+}
+function bindNewIssueCalc(){
+  const ids=["nv_price","nv_pe","nv_mcap","nv_flow"];
+  if(!$("#nv_price")) return;
+  ids.forEach(i=>{ const el=$("#"+i); if(el) el.addEventListener("input",calcNewIssue); });
+}
+function calcNewIssue(){
+  const c=findCompany(currentId); if(!c) return;
+  const a=c.actualIssue||{}, fin=c.financial||{};
+  const totalShares10k = a.totalShares10k||a.shares10k||0;
+  const flowShares10k = a.onlineShares10k||totalShares10k||0;
+  const npYuan=(fin.netProfit&&fin.netProfit.length? fin.netProfit[fin.netProfit.length-1]:0)*1e4;
+  const totalShares=totalShares10k*1e4, flowShares=flowShares10k*1e4;
+  const get=id=>{ const v=+($("#"+id).value); return isFinite(v)&&v>0?v:null; };
+  const price=get("nv_price"), pe=get("nv_pe"), mcap=get("nv_mcap"), flow=get("nv_flow");
+  const f=(v,dot=2)=>v!=null?fmtNum(v,dot):"—";
+  const el=$("#nv_result"); if(!el) return;
+  let out=null;
+  if(price!=null){
+    const mc=price*totalShares, fl=price*flowShares;
+    out={price,pe:mc/npYuan,mcap:mc/1e8,flow:fl/1e8};
+  } else if(pe!=null){
+    const mc=pe*npYuan, pr=mc/totalShares;
+    out={price:pr,pe,mcap:mc/1e8,flow:pr*flowShares/1e8};
+  } else if(mcap!=null){
+    const mc=mcap*1e8, pr=mc/totalShares;
+    out={price:pr,pe:mc/npYuan,mcap,flow:pr*flowShares/1e8};
+  } else if(flow!=null){
+    const fl=flow*1e8, pr=fl/flowShares, mc=pr*totalShares;
+    out={price:pr,pe:mc/npYuan,mcap:mc/1e8,flow};
+  }
+  const avgPe=(()=>{ const v=(c.comps||[]).map(x=>x&&x.peTTM).filter(v=>v!=null&&!isNaN(v)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  el.innerHTML=out?`<div class="result-box">
+    <div class="row"><span>股价</span><b class="red">${f(out.price)} 元</b></div>
+    <div class="row"><span>静态市盈率</span><b>${f(out.pe,1)}x</b></div>
+    <div class="row"><span>总市值</span><b>${f(out.mcap,1)} 亿</b></div>
+    <div class="row"><span>流通市值</span><b>${f(out.flow,1)} 亿</b></div>
+    ${avgPe!=null?`<div class="row"><span>测算 PE vs 可比均值 ${fmtNum(avgPe,1)}x</span>${out.pe<avgPe?`<b class="down">低 ${fmtPct((avgPe-out.pe)/avgPe,1)}（估值折价）</b>`:`<b class="up">高 ${fmtPct((out.pe-avgPe)/avgPe,1)}（估值溢价）</b>`}</div>`:""}
+  </div>`:`<div class="tiny">请在上面四项中输入任意一项……</div>`;
 }
 function renderAnnounce(c){
   const list=c.announcements||[];
@@ -1951,29 +2171,44 @@ function saveFirstDay(){
   if(c.firstDay.issuePrice) c.actualIssue.price=c.firstDay.issuePrice;
   save(); renderDetail(); toast("首日复盘已保存");
 }
-function renderBroker(c){
-  const q=c.brokerQuotes||[];
+function renderDarkPool(c){
+  const dp=c.darkPool||{};
+  const a=c.actualIssue||{};
   const fd=c.firstDay||{};
-  const realClose=fd.close;
-  const realOpen=fd.open;
-  const avg=realOpen!=null&&realClose!=null? (realOpen+realClose)/2 : realClose;
-  if(!q.length && realClose==null) return "";
-  const avgQuote=q.length? q.reduce((s,x)=>{const m=((x.rangeLow||0)+(x.rangeHigh||0))/2; return s+m;},0)/q.length : null;
-  return `<div class="card" id="broker"><h2>中介报价板块</h2>
-  ${q.length?`<div class="table-wrap"><table>
-    <thead><tr><th>中介</th><th>报价区间(元)</th><th>区间中值</th><th>vs 首日真实价</th><th>备注</th><th>日期</th></tr></thead>
-    <tbody>${q.map(x=>{
-      const mid=((x.rangeLow||0)+(x.rangeHigh||0))/2;
-      const diff=realClose!=null? (realClose-mid)/mid : null;
-      return `<tr><td>${esc(x.broker)}</td><td>${x.rangeLow}–${x.rangeHigh}</td><td>${fmtNum(mid,1)}</td><td>${diff!=null?pctColor(diff):"—"}</td><td>${esc(x.note||"")}</td><td>${x.date||""}</td></tr>`;
-    }).join("")}</tbody></table></div>`:""}
-  <div class="kv" style="margin-top:12px">
-    <div class="item"><div class="k">中介报价均值</div><div class="v">${avgQuote!=null?fmtNum(avgQuote,1):"—"}</div></div>
-    <div class="item"><div class="k">首日真实价(收)</div><div class="v">${realClose!=null?fmtNum(realClose,2):"—"}</div></div>
-    <div class="item"><div class="k">首日真实价(开)</div><div class="v">${realOpen!=null?fmtNum(realOpen,2):"—"}</div></div>
-    <div class="item"><div class="k">真实价 vs 中介均值</div><div class="v">${avgQuote!=null&&realClose!=null?pctColor((realClose-avgQuote)/avgQuote):"—"}</div></div>
+  const issue=a.price||fd.issuePrice;
+  const has=dp.price!=null||dp.note;
+  if(!canEdit()){
+    if(!has&&fd.close==null) return "";
+    const vsIssue = dp.price!=null&&issue? (dp.price/issue-1) : null;
+    const vsClose = dp.price!=null&&fd.close!=null? (dp.price/fd.close-1) : null;
+    return `<div class="card" id="darkpool"><h2>暗盘价格</h2>
+    <div class="kv">
+      <div class="item"><div class="k">暗盘价(元)</div><div class="v">${dp.price!=null?fmtMoney(dp.price):"—"}</div></div>
+      <div class="item"><div class="k">较发行价</div><div class="v">${vsIssue!=null?pctColor(vsIssue):"—"}</div></div>
+      <div class="item"><div class="k">首日收盘</div><div class="v">${fd.close!=null?fmtMoney(fd.close):"—"}</div></div>
+      <div class="item"><div class="k">暗盘 vs 首日收盘</div><div class="v">${vsClose!=null?pctColor(vsClose):"—"}</div></div>
+      <div class="item"><div class="k">暗盘日期</div><div class="v">${dp.date||"—"}</div></div>
+    </div>
+    ${dp.note?`<div class="tiny" style="margin-top:8px">${esc(dp.note)}</div>`:""}
+    <div class="tiny" style="margin-top:6px">暗盘为上市前一日券商报价，非正式交易价格，仅供参考。</div></div>`;
+  }
+  return `<div class="card" id="darkpool"><h2>暗盘价格（管理员录入）</h2>
+  <div class="grid2">
+    <div class="field"><label>暗盘价(元)</label><input type="number" id="dp_price" value="${dp.price??""}" step="0.01"></div>
+    <div class="field"><label>暗盘日期</label><input id="dp_date" value="${dp.date||""}" placeholder="如 2026-08-27"></div>
+    <div class="field" style="grid-column:1/-1"><label>数据来源/备注</label><input id="dp_note" value="${dp.note||""}" placeholder="如：某券商暗盘报价 xx 元，需确保真实有效"></div>
   </div>
-  <div class="tiny" style="margin-top:8px"><span class="up">红涨</span> <span class="down">绿跌</span>：真实价高于中介报价为红（超预期），低于为绿（不及预期）。</div></div>`;
+  <button class="btn" style="background:var(--red);color:#fff;margin-top:10px;padding:9px 16px" onclick="saveDarkPool()">保存暗盘价格</button>
+  </div>`;
+}
+function saveDarkPool(){
+  if(!canEdit()) return toast("仅管理员可编辑");
+  const c=findCompany(currentId); if(!c) return;
+  const price=+($("#dp_price").value);
+  c.darkPool={price:isFinite(price)&&price>0?price:null,date:$("#dp_date").value.trim(),note:$("#dp_note").value.trim()};
+  if(c.darkPool.price&&c.actualIssue.price) c.darkPool.vsIssuePct=(c.darkPool.price/c.actualIssue.price-1);
+  try{ save(); }catch(e){ return toast("保存失败："+e.message); }
+  renderDetail(); toast("暗盘价格已保存");
 }
 function renderRatingForm(c){
   const r=c.rating||{};
@@ -2006,6 +2241,108 @@ function saveRating(){
   c.rating.note=$("#noteInput").value;
   c.rating.updatedAt=new Date().toISOString().slice(0,16).replace("T"," ");
   save(); renderDetail(); toast("研判已保存");
+}
+
+/* ================= 公司新股深度分析报告 ================= */
+let reportEditId=null;
+function startReportEdit(id){ if(!canEdit()) return toast("仅管理员可编辑"); reportEditId=id; renderDetail(); setTimeout(()=>{const el=$("#report"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});},50); }
+function cancelReportEdit(){ reportEditId=null; renderDetail(); }
+function renderReport(c){
+  const r=c.report||{};
+  const has=r.investmentLogic||(r.risks&&r.risks.length)||r.keyAssumptions||r.marketViews||r.catalysts||r.valuation||r.companyOverview||r.companyHistory||r.productTable||r.equityStructure||r.financialHistory||r.revenueStructure||r.profitability||r.industryDef||r.marketSize||r.competitionLandscape||r.competitiveness||r.growthPoints||r.comparableAnalysis||r.profitModel||r.riskSection;
+  const editBtn=canEdit()?`<span class="deep-edit" onclick="startReportEdit('${c.id}')">✎ 编辑</span>`:"";
+  if(reportEditId===c.id) return renderReportEditor(c);
+  if(!has) return `<div class="card" id="report"><h2>公司新股深度分析报告${editBtn}</h2><div class="tiny">报告待撰写（三段式核心投资逻辑 / 投资要点四模块 / 正文六章）。${canEdit()?'点击右上角「编辑」在线撰写。':''}</div></div>`;
+  const sec=(title,content,id)=>content?`<div class="rp-sec" id="rp-${id}"><div class="deep-h3">${title}</div><div class="deep-para">${esc(content)}</div></div>`:"";
+  const listSec=(title,arr,id)=>(arr&&arr.length)?`<div class="rp-sec" id="rp-${id}"><div class="deep-h3">${title}</div><ul class="rp-list">${arr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
+  return `<div class="card" id="report"><h2>公司新股深度分析报告${editBtn}</h2>
+  <div class="report-body">
+    <div class="rp-part">第一部分 · 核心投资逻辑</div>
+    ${sec("① 三段式核心投资逻辑", r.investmentLogic, "logic")}
+    ${listSec("② 风险提示", r.risks, "risks")}
+    <div class="rp-part">第二部分 · 投资要点</div>
+    ${sec("关键假设", r.keyAssumptions, "assump")}
+    ${sec("区别于市场的观点", r.marketViews, "views")}
+    ${sec("股价上涨催化剂", r.catalysts, "catalyst")}
+    ${sec("估值与评级", r.valuation, "valuation")}
+    <div class="rp-part">第三部分 · 正文</div>
+    <details open><summary>第一章 公司概况</summary>
+      ${sec("1.1 主营业务与行业定位", r.companyOverview, "ch1-1")}
+      ${sec("1.1 发展历程", r.companyHistory, "ch1-2")}
+      ${sec("1.1 主营产品分类", r.productTable, "ch1-3")}
+      ${sec("1.2 股权结构", r.equityStructure, "ch1-4")}
+      ${sec("1.3 历年财务概况", r.financialHistory, "ch1-5")}
+      ${sec("1.3 收入结构拆分", r.revenueStructure, "ch1-6")}
+      ${sec("1.3 盈利水平分析", r.profitability, "ch1-7")}
+    </details>
+    <details><summary>第二章 行业发展现状</summary>
+      ${sec("2.1 行业定义与完整产业链", r.industryDef, "ch2-1")}
+      ${sec("2.2 行业市场规模与增长驱动", r.marketSize, "ch2-2")}
+      ${sec("2.3 全球+国内竞争格局", r.competitionLandscape, "ch2-3")}
+    </details>
+    <details><summary>第三章 公司核心竞争力与未来成长增量</summary>
+      ${sec("3.1 公司核心竞争壁垒", r.competitiveness, "ch3-1")}
+      ${sec("3.2 公司成长增长点", r.growthPoints, "ch3-2")}
+    </details>
+    <details><summary>第四章 可比公司财务对比分析</summary>
+      ${sec("可比公司财务对比（营收/净利/毛利率/研发费率/周转率/ROE）", r.comparableAnalysis, "ch4")}
+    </details>
+    <details><summary>第五章 盈利预测（逻辑框架）</summary>
+      ${sec("盈利预测逻辑框架", r.profitModel, "ch5")}
+    </details>
+    <details><summary>第六章 风险提示</summary>
+      ${sec("风险提示（含汇率/研发等适配风险）", r.riskSection, "ch6")}
+    </details>
+  </div></div>`;
+}
+function renderReportEditor(c){
+  const r=c.report||{};
+  const inp=(k,v,ph,h="70px")=>`<div class="field" style="margin-top:8px"><label>${ph}</label><textarea data-rk="${k}" placeholder="${ph}" style="min-height:${h}">${esc(v||"")}</textarea></div>`;
+  return `<div class="card" id="report">
+  <h2>公司新股深度分析报告 · 编辑
+    <span class="deep-edit" onclick="cancelReportEdit()">取消</span>
+    <span class="deep-edit" style="background:var(--red);color:#fff;border-color:var(--red);margin-left:6px" onclick="saveReportEdit('${c.id}')">保存</span>
+  </h2>
+  <div class="deep-form">
+    <label class="sec">第一部分 · 核心投资逻辑</label>
+    ${inp("investmentLogic",r.investmentLogic,"① 三段式核心投资逻辑（市场地位 / 客户·技术·国产替代壁垒 / 产能·中长期增长点）","110px")}
+    <div class="field" style="margin-top:8px"><label>② 风险提示（每行一条，约 6 条；外销占比高必加汇兑风险、研发型企业必加研发不及预期风险）</label><textarea data-rk="risks" data-arr="1" placeholder="每行一条风险" style="min-height:110px">${esc((r.risks||[]).join("\n"))}</textarea></div>
+    <label class="sec">第二部分 · 投资要点</label>
+    ${inp("keyAssumptions",r.keyAssumptions,"关键假设（营收/产能/放量/下游景气假设逻辑，不写预测数值）","90px")}
+    ${inp("marketViews",r.marketViews,"区别于市场的观点（认知误区 vs 真实基本面）","90px")}
+    ${inp("catalysts",r.catalysts,"股价上涨催化剂（短期/中长期：产能、客户验证、政策、需求、新品）","90px")}
+    ${inp("valuation",r.valuation,"估值与评级（估值逻辑、赛道稀缺性、同业对比思路，不测算 PE/目标价）","80px")}
+    <label class="sec">第三部分 · 正文</label>
+    ${inp("companyOverview",r.companyOverview,"1.1 主营业务与行业定位（招股书业务与技术原文+行业地位论证）","110px")}
+    ${inp("companyHistory",r.companyHistory,"1.1 发展历程（官网/招股书梳理，时间线）","90px")}
+    ${inp("productTable",r.productTable,"1.1 主营产品分类（表格或清单）","90px")}
+    ${inp("equityStructure",r.equityStructure,"1.2 股权结构（实控人/控制权/员工持股/战投亮点）","90px")}
+    ${inp("financialHistory",r.financialHistory,"1.3 历年财务概况（营收利润趋势与波动归因）","90px")}
+    ${inp("revenueStructure",r.revenueStructure,"1.3 收入结构（分产品+分地区）","90px")}
+    ${inp("profitability",r.profitability,"1.3 盈利水平（毛利率/期间费用率/净利率变化逻辑）","90px")}
+    ${inp("industryDef",r.industryDef,"2.1 行业定义与完整产业链","90px")}
+    ${inp("marketSize",r.marketSize,"2.2 行业市场规模与增长驱动（数据+下游景气传导）","90px")}
+    ${inp("competitionLandscape",r.competitionLandscape,"2.3 全球+国内竞争格局（对手对比表/各家优劣势）","110px")}
+    ${inp("competitiveness",r.competitiveness,"3.1 核心竞争壁垒（产品/技术/资质/客户/产能）","90px")}
+    ${inp("growthPoints",r.growthPoints,"3.2 成长增长点（产能利用率/募投项目表/新增长曲线）","110px")}
+    ${inp("comparableAnalysis",r.comparableAnalysis,"第四章 可比公司财务对比（3-4家，六大指标对比总结）","90px")}
+    ${inp("profitModel",r.profitModel,"第五章 盈利预测逻辑框架（只写假设逻辑，不输出数值）","90px")}
+    ${inp("riskSection",r.riskSection,"第六章 风险提示（6条左右，每条=风险名称+经营影响）","110px")}
+  </div></div>`;
+}
+function saveReportEdit(id){
+  if(!canEdit()) return toast("仅管理员可编辑");
+  const c=findCompany(id); if(!c) return;
+  const r=c.report||{};
+  $$("#report [data-rk]").forEach(el=>{
+    let v=el.value;
+    if(el.getAttribute("data-arr")) v=v.split("\n").map(s=>s.trim()).filter(Boolean);
+    else v=v.trim();
+    r[el.getAttribute("data-rk")]=v;
+  });
+  c.report=r; reportEditId=null;
+  try{ save(); }catch(e){ return toast("保存失败："+e.message); }
+  renderDetail(); toast("深度分析报告已保存");
 }
 
 /* 事件委托：星级 */
