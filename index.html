@@ -722,7 +722,7 @@ C({id:"jfd",code:"920269",name:"杰锋动力",industry:"汽车零部件",status:
   thresholdPreview:{expectedFund:8360,threshold:1141,topThreshold:1365,note:"碎股门槛（顶格）约 1365 万，需抢时间申购"},
   financial:{years:[2023,2024,2025],revenue:[170741.69,210022.01,237288.03],netProfit:[13072.27,14509.76,14670.80],netDeducted:[12654.61,12909.30,14196.53]},
   forecast:{y2026:{revenue:245000,netProfit:15500},y2027:{revenue:270000,netProfit:18000}},
-  prospectusUrl:"https://pdf.dfcfw.com/pdf/H2_AN202608241828364927_1.pdf",
+  prospectusUrl:"https://static.cninfo.com.cn/finalpage/2026-08-24/1225498391.PDF",
   themes:["汽车零部件","排气系统","奇瑞产业链","氢燃料电池","智能悬架","国产替代"],
   comps:[{name:"威孚高科",code:"000581",marketCap:177,peTTM:14.1,psTTM:1.32,pe2026E:null,pe2027E:null},
          {name:"富临精工",code:"300432",marketCap:null,peTTM:53.3,psTTM:1.70,pe2026E:null,pe2027E:null},
@@ -758,7 +758,7 @@ C({id:"hdht",code:"920288",name:"华大海天",industry:"造纸印刷",status:"l
   financial:{years:[2023,2024,2025],revenue:[50457.29,53698.50,59873.54],netProfit:[8511.50,6179.43,6988.11],netDeducted:[7823.13,5909.94,6787.71]},
   forecast:{y2026:{revenue:68700,netProfit:7814.51},y2027:{revenue:79000,netProfit:9000}},
   firstDay:{issuePrice:12.57,open:25.18,close:28.51,high:38.50,low:25.12,turnover:97.03},
-  prospectusUrl:"https://pdf.dfcfw.com/pdf/H2_AN202608131827942242_1.pdf",
+  prospectusUrl:"https://static.cninfo.com.cn/finalpage/2026-08-13/1225472412.PDF",
   themes:["特种纸","数码纸基材料","食品包装","专精特新小巨人","环保材料"],
   comps:[{name:"仙鹤股份",code:"603733",marketCap:95,peTTM:18.2,psTTM:2.6,pe2026E:14.8,pe2027E:11.9},
          {name:"五洲特纸",code:"605007",marketCap:null,peTTM:null,psTTM:null,pe2026E:null,pe2027E:null},
@@ -828,7 +828,7 @@ C({id:"hhzn",code:"920289",name:"华汇智能",industry:"智能装备",status:"p
   thresholdPreview:{expectedFund:11856,threshold:820,topThreshold:null,note:"网上获配 0.0216%，稳中 1 手约 820 万"},
   financial:{years:[2023,2024,2025],revenue:[30025.08,42655.78,61561.74],netProfit:[4643.32,6262.32,8042.35],netDeducted:[4623.01,6264.50,8033.22]},
   forecast:{y2026:{revenue:null,netProfit:null},y2027:{revenue:null,netProfit:null}},
-  prospectusUrl:"https://pdf.dfcfw.com/pdf/H2_AN202608201828207538_1.pdf",
+  prospectusUrl:"https://static.cninfo.com.cn/finalpage/2026-08-20/1225488023.PDF",
   themes:["锂电设备","纳米砂磨机","磷酸铁锂正极材料","专精特新小巨人","国产替代","数控机床"],
   comps:[{name:"先导智能",code:"300450",marketCap:463,peTTM:50,psTTM:4.5,pe2026E:null,pe2027E:null},
     {name:"利元亨",code:"688499",marketCap:60,peTTM:108,psTTM:1.75,pe2026E:null,pe2027E:null},
@@ -1541,7 +1541,7 @@ function renderDetail(){
   const canE=canEdit();
   const starWidget=`<span class="stars" ${canE?'data-act="rate"':''}>${[1,2,3,4,5].map(i=>`<span ${canE?`data-v="${i}"`:''} class="${i<=c.rating.stars?'on':''}">★</span>`).join("")}</span>`;
   const psBtn = c.prospectusUrl?`<a class="ps-btn" href="${esc(c.prospectusUrl)}" target="_blank" rel="noopener">📄 打开招股说明书</a>`:
-    `<a class="ps-btn" href="https://search.bse.cn/?keyword=${encodeURIComponent(c.name)}" target="_blank" rel="noopener">🔍 搜招股说明书</a>`;
+    `<a class="ps-btn" href="https://www.cninfo.com.cn/new/fulltextSearch/full?searchkey=${encodeURIComponent(c.name)}" target="_blank" rel="noopener">🔍 搜招股说明书</a>`;
   $("#detailRoot").innerHTML=`
   <div class="back" onclick="go('dashboard')">← 返回看板</div>
   <div class="card">
