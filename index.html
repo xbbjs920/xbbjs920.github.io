@@ -2094,25 +2094,30 @@ function renderNewIssueCalc(c){
     return `<div class="card" id="newissue"><h2>新股估值测算</h2><div class="tiny">需先在「发行方案」中补充总股本与财务数据后可用。</div></div>`;
   }
   const avgPe=(()=>{ const v=(c.comps||[]).map(x=>x&&x.peTTM).filter(v=>v!=null&&!isNaN(v)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  const issuePrice=a.price||null;
   return `<div class="card" id="newissue"><h2>新股估值测算 <span class="tiny">输入任一数据自动算其他</span></h2>
-  <div class="tiny" style="margin-bottom:8px">总股本 ${fmtNum(totalShares10k,0)} 万股${flowShares10k?` · 网上流通 ${fmtNum(flowShares10k,0)} 万股`:""} · 最新归母净利 ${fmtW(npW)}。输入 <b>股价 / 市盈率 / 总市值 / 流通市值</b> 任一，自动反算其余三项并对比可比公司平均 PE。</div>
+  <div class="tiny" style="margin-bottom:8px">总股本 ${fmtNum(totalShares10k,0)} 万股${flowShares10k?` · 网上流通 ${fmtNum(flowShares10k,0)} 万股`:""} · 最新归母净利 ${fmtW(npW)}。${issuePrice?`<b class="red">已预填发行价 ${fmtNum(issuePrice,2)} 元作为参考</b>，`:"输入"} <b>股价 / 市盈率 / 总市值 / 流通市值</b> 任一，自动反算其余三项并对比可比公司平均 PE。</div>
   <div class="grid2">
-    <div class="field"><label>股价(元)</label><input type="number" id="nv_price" step="0.01" placeholder="输入任一即可"></div>
+    <div class="field"><label>股价(元)${issuePrice?`<span class="tiny" style="color:var(--red)"> 发行价 ${fmtNum(issuePrice,2)}</span>`:""}</label><input type="number" id="nv_price" step="0.01" value="${issuePrice??""}" placeholder="${issuePrice?"以发行价为参考":"输入任一即可"}"></div>
     <div class="field"><label>市盈率 PE(倍)</label><input type="number" id="nv_pe" step="0.01" placeholder="静态口径"></div>
     <div class="field"><label>总市值(亿元)</label><input type="number" id="nv_mcap" step="0.01" placeholder="输入任一即可"></div>
     <div class="field"><label>流通市值(亿元)</label><input type="number" id="nv_flow" step="0.01" placeholder="输入任一即可"></div>
   </div>
   <div id="nv_result"></div>
   ${avgPe!=null?`<div class="tiny" style="margin-top:8px">对标：可比公司平均 PE(TTM) ≈ <b class="red">${fmtNum(avgPe,1)}x</b>（${(c.comps||[]).length} 家）</div>`:""}
-  <div class="tiny" style="margin-top:4px">注：流通市值以网上发行股数近似（未考虑老股转售/绿鞋）；PE 为静态口径（最新归母净利）。</div>
+  <div class="tiny" style="margin-top:4px">注：流通市值以网上发行股数近似（未考虑老股转售/绿鞋）；PE 为静态口径（最新归母净利）；发行价仅供锚定参考，可修改后重新测算。</div>
   </div>`;
 }
 function bindNewIssueCalc(){
   const ids=["nv_price","nv_pe","nv_mcap","nv_flow"];
   if(!$("#nv_price")) return;
   ids.forEach(i=>{ const el=$("#"+i); if(el) el.addEventListener("input",calcNewIssue); });
+  // 已有发行价预填时，自动触发一次计算展示参考估值
+  if($("#nv_price").value) { try{ calcNewIssue(); }catch(e){} }
 }
-function calcNewIssue(){
+let nvLastInput=null; // 记录最近一次用户输入的字段，计算时以其为基准
+function calcNewIssue(ev){
+  if(ev&&ev.target&&ev.target.id) nvLastInput=ev.target.id;
   const c=findCompany(currentId); if(!c) return;
   const a=c.actualIssue||{}, fin=c.financial||{};
   const totalShares10k = a.totalShares10k||a.shares10k||0;
@@ -2120,22 +2125,25 @@ function calcNewIssue(){
   const npYuan=(fin.netProfit&&fin.netProfit.length? fin.netProfit[fin.netProfit.length-1]:0)*1e4;
   const totalShares=totalShares10k*1e4, flowShares=flowShares10k*1e4;
   const get=id=>{ const v=+($("#"+id).value); return isFinite(v)&&v>0?v:null; };
-  const price=get("nv_price"), pe=get("nv_pe"), mcap=get("nv_mcap"), flow=get("nv_flow");
+  const vals={nv_price:get("nv_price"),nv_pe:get("nv_pe"),nv_mcap:get("nv_mcap"),nv_flow:get("nv_flow")};
   const f=(v,dot=2)=>v!=null?fmtNum(v,dot):"—";
   const el=$("#nv_result"); if(!el) return;
   let out=null;
-  if(price!=null){
-    const mc=price*totalShares, fl=price*flowShares;
+  // 以「最后输入的字段」为计算基准；未输入任何字段时按 股价→PE→总市值→流通市值 顺序取第一个有值的
+  const order=nvLastInput&&vals[nvLastInput]!=null? [nvLastInput, ...Object.keys(vals).filter(k=>k!==nvLastInput)] : Object.keys(vals);
+  const src=order.find(k=>vals[k]!=null);
+  if(src==="nv_price"){
+    const price=vals.nv_price, mc=price*totalShares, fl=price*flowShares;
     out={price,pe:mc/npYuan,mcap:mc/1e8,flow:fl/1e8};
-  } else if(pe!=null){
-    const mc=pe*npYuan, pr=mc/totalShares;
+  } else if(src==="nv_pe"){
+    const pe=vals.nv_pe, mc=pe*npYuan, pr=mc/totalShares;
     out={price:pr,pe,mcap:mc/1e8,flow:pr*flowShares/1e8};
-  } else if(mcap!=null){
-    const mc=mcap*1e8, pr=mc/totalShares;
-    out={price:pr,pe:mc/npYuan,mcap,flow:pr*flowShares/1e8};
-  } else if(flow!=null){
-    const fl=flow*1e8, pr=fl/flowShares, mc=pr*totalShares;
-    out={price:pr,pe:mc/npYuan,mcap:mc/1e8,flow};
+  } else if(src==="nv_mcap"){
+    const mc=vals.nv_mcap*1e8, pr=mc/totalShares;
+    out={price:pr,pe:mc/npYuan,mcap:vals.nv_mcap,flow:pr*flowShares/1e8};
+  } else if(src==="nv_flow"){
+    const fl=vals.nv_flow*1e8, pr=fl/flowShares, mc=pr*totalShares;
+    out={price:pr,pe:mc/npYuan,mcap:mc/1e8,flow:vals.nv_flow};
   }
   const avgPe=(()=>{ const v=(c.comps||[]).map(x=>x&&x.peTTM).filter(v=>v!=null&&!isNaN(v)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
   el.innerHTML=out?`<div class="result-box">
@@ -2143,7 +2151,7 @@ function calcNewIssue(){
     <div class="row"><span>静态市盈率</span><b>${f(out.pe,1)}x</b></div>
     <div class="row"><span>总市值</span><b>${f(out.mcap,1)} 亿</b></div>
     <div class="row"><span>流通市值</span><b>${f(out.flow,1)} 亿</b></div>
-    ${avgPe!=null?`<div class="row"><span>测算 PE vs 可比均值 ${fmtNum(avgPe,1)}x</span>${out.pe<avgPe?`<b class="down">低 ${fmtPct((avgPe-out.pe)/avgPe,1)}（估值折价）</b>`:`<b class="up">高 ${fmtPct((out.pe-avgPe)/avgPe,1)}（估值溢价）</b>`}</div>`:""}
+    ${avgPe!=null?`<div class="row"><span>测算 PE 对标可比均值 ${fmtNum(avgPe,1)}x</span>${out.pe<avgPe?`<b class="down">低 ${fmtPct((avgPe-out.pe)/avgPe,1)}（估值折价）</b>`:out.pe>avgPe?`<b class="up">高 ${fmtPct((out.pe-avgPe)/avgPe,1)}（估值溢价）</b>`:`<b>持平可比均值</b>`}</div>`:""}
   </div>`:`<div class="tiny">请在上面四项中输入任意一项……</div>`;
 }
 function renderAnnounce(c){
