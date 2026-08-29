@@ -2146,8 +2146,10 @@ function calcNewIssue(ev){
     out={price:pr,pe:mc/npYuan,mcap:mc/1e8,flow:vals.nv_flow};
   }
   const avgPe=(()=>{ const v=(c.comps||[]).map(x=>x&&x.peTTM).filter(v=>v!=null&&!isNaN(v)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  const issuePrice=a.price||null;
+  const vsIssue=issuePrice!=null&&out!=null&&out.price!=null? out.price/issuePrice-1:null;
   el.innerHTML=out?`<div class="result-box">
-    <div class="row"><span>股价</span><b class="red">${f(out.price)} 元</b></div>
+    <div class="row"><span>股价</span><b class="red">${f(out.price)} 元</b>${vsIssue!=null?`<span class="tiny" style="margin-left:8px">较发行价 ${fmtNum(issuePrice,2)} 元 ${pctColor(vsIssue)}</span>`:""}</div>
     <div class="row"><span>静态市盈率</span><b>${f(out.pe,1)}x</b></div>
     <div class="row"><span>总市值</span><b>${f(out.mcap,1)} 亿</b></div>
     <div class="row"><span>流通市值</span><b>${f(out.flow,1)} 亿</b></div>
