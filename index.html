@@ -983,6 +983,37 @@ tbody tr:hover{background:#faf6ef}
   }
   #view-h1 .back-top svg { pointer-events: none; display: block; }
 
+  /* ===== 每日北交所新闻速递 ===== */
+  .news-hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-bottom:6px}
+  .news-hero h2{margin:0;font-size:20px;color:#2a3040}
+  .news-badge{background:linear-gradient(135deg,var(--red),#a30d26);color:#fff;font-size:11px;font-weight:700;border-radius:20px;padding:4px 10px;letter-spacing:.5px}
+  .news-meta{font-size:12px;color:var(--txt3);margin:0 0 12px;line-height:1.7}
+  .news-meta b{color:var(--gold)}
+  .nf-filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+  .nf-filters .tag{cursor:pointer}
+  .nf-list{display:flex;flex-direction:column;gap:10px}
+  .nf-item{background:var(--card);border:1px solid #eee;border-left:3px solid #ddd;border-radius:10px;padding:11px 14px;transition:.2s}
+  .nf-item:hover{box-shadow:0 4px 14px rgba(20,24,40,.08);border-left-color:var(--red)}
+  .nf-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--txt3);margin-bottom:5px}
+  .nf-cat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.3px}
+  .nf-cat.cat-news{background:#eef2ff;color:#4a5cc7}
+  .nf-cat.cat-policy{background:#fdf3dc;color:#b8860b}
+  .nf-cat.cat-ann{background:#fde8ec;color:#c41230}
+  .nf-cat.cat-co{background:#e8f6ee;color:#0a8f4b}
+  .nf-cat.cat-ipo{background:#f0e9fb;color:#7c3aed}
+  .nf-time{font-variant-numeric:tabular-nums}
+  .nf-src{color:var(--txt3)}
+  .nf-item a.nf-title{display:block;font-size:15px;font-weight:600;color:#2a3040;text-decoration:none;line-height:1.5;margin-bottom:3px}
+  .nf-item a.nf-title:hover{color:var(--red)}
+  .nf-sum{font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:4px}
+  .nf-foot{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt3)}
+  .nf-empty{text-align:center;color:var(--txt3);padding:30px 0;font-size:14px}
+  .nf-live{font-size:11px;color:#fff;background:var(--red);border-radius:12px;padding:3px 8px;animation:nfPulse 2s infinite}
+  @keyframes nfPulse{0%,100%{opacity:1}50%{opacity:.55}}
+  @media (max-width:600px){
+    .nf-item a.nf-title{font-size:14px}
+  }
+
 </style>
 </head>
 <body data-page-node-id="G7xnUxVyXqeOGxLaqDd1nf">
@@ -994,9 +1025,10 @@ tbody tr:hover{background:#faf6ef}
       <div class="logo-big" data-page-node-id="iOD2t3BKllVAVwWRklrBB4">西</div>
       <h1 data-page-node-id="UwZvJrao3fGL2WhEK4gRie">西部北交所工作台</h1>
       <p data-page-node-id="pAEzuxTd1FUuwchRIzS7oU">西部证券研发中心 · 新股全周期跟踪与研判 · 认证后使用</p>
-      <div style="text-align:center;margin:14px 0 4px" data-page-node-id="IyqQrVkkMOoaAbVaDjMFVJ">
-        <button onclick="openPublicH1()" style="background:transparent;border:1px dashed rgba(196,18,48,.55);color:var(--red);border-radius:22px;padding:10px 18px;font-size:13.5px;font-weight:600;width:100%;transition:.25s" data-page-node-id="GvmoHGCY7f174ej9jMQI6X">👁 访客浏览 · 2026 北交所半年报汇总（337 家 · 无需登录）</button>
-        <div style="font-size:11px;color:#999;margin-top:6px;line-height:1.6" data-page-node-id="vGUEi3G2XXRlx7ib8op4ja">仅开放半年报数据浏览；打新看板 / 测算器等完整功能需登录后使用</div>
+      <div style="display:flex;flex-direction:column;gap:6px;text-align:center;margin:14px 0 4px" data-page-node-id="IyqQrVkkMOoaAbVaDjMFVJ">
+        <button onclick="openPublicNews()" style="background:transparent;border:1px dashed rgba(184,134,11,.6);color:#b8860b;border-radius:22px;padding:9px 18px;font-size:13.5px;font-weight:600;width:100%;transition:.25s" data-page-node-id="guestNewsBtn1">📰 访客浏览 · 每日北交所新闻速递（无需登录）</button>
+        <button onclick="openPublicH1()" style="background:transparent;border:1px dashed rgba(196,18,48,.55);color:var(--red);border-radius:22px;padding:9px 18px;font-size:13.5px;font-weight:600;width:100%;transition:.25s" data-page-node-id="GvmoHGCY7f174ej9jMQI6X">👁 访客浏览 · 2026 北交所半年报汇总（337 家 · 无需登录）</button>
+        <div style="font-size:11px;color:#999;margin-top:2px;line-height:1.6" data-page-node-id="vGUEi3G2XXRlx7ib8op4ja">访客可浏览公开资讯与半年报数据；打新看板 / 测算器等完整功能需登录后使用</div>
       </div>
     </div>
     <div class="auth-tabs" data-page-node-id="n0R8B3VbpRY5PBPtBEJVaA">
@@ -1079,6 +1111,7 @@ tbody tr:hover{background:#faf6ef}
   <div class="tab" data-view="calc" onclick="go('calc')" data-page-node-id="DLPAIoRyhsVia6vVui4q6a">打新测算器</div>
   <div class="tab" data-view="notes" onclick="go('notes')" data-page-node-id="iU5Lk99keQtUsPlwZ68HKt">研判记录</div>
   <div class="tab" data-view="data" onclick="go('data')" data-page-node-id="WkohwvffMxTOol3hDFM1r5">数据管理</div>
+  <div class="tab" data-view="news" onclick="go('news')">新闻速递</div>
   <div class="tab" data-view="h1" onclick="go('h1')" data-page-node-id="ELXyLYXluRJakvDRnzGA4w">H1 中报汇总</div>
 </nav>
 
@@ -1112,6 +1145,20 @@ tbody tr:hover{background:#faf6ef}
       <div class="formula-note" style="margin-top:14px" data-page-node-id="8aREok8A5D2KcSdDCNMZ2V">
         <b data-page-node-id="goKBmSCBxoIH3K09hNpy5Q">公式口径：</b>① 网上发行金额(万元) = 网上发行股数(万股) × 发行价(元)；② 预估中签率 = 网上发行金额 ÷ 预计申购资金总额；③ 申购股数 = ⌊参与资金÷发行价÷100⌋×100；④ 预期中签股数 = 申购股数 × 中签率；⑤ 稳中 1 手(100股)资金 = 100×发行价 ÷ 中签率；⑥ N 手中签门槛 = N × 稳中 1 手资金；⑦ 收益 = 中签股数 × 发行价 × 涨幅；⑧ 收益率 = 收益 ÷ 参与资金。战略配售占比用于折算网上发行量，绿鞋(超额配售)另可调增发行量。
       </div>
+    </div>
+  </section>
+
+  <!-- 每日北交所新闻速递 -->
+  <section id="view-news" class="hidden">
+    <div class="card">
+      <div class="news-hero">
+        <h2>每日北交所新闻速递</h2>
+        <span class="news-badge">每日 12/15/18/21 点更新</span>
+        <span class="nf-live" style="margin-left:auto">LIVE</span>
+      </div>
+      <p class="news-meta">自动收集北交所相关 <b>新闻 / 政策 / 上市公司重要公告</b>，点击标题跳转信息原始网页 · 数据更新于 <b id="newsUpdated">—</b> · 仅供研究参考，不构成投资建议</p>
+      <div class="nf-filters" id="nfFilters"></div>
+      <div class="nf-list" id="nfList"></div>
     </div>
   </section>
 
@@ -14871,6 +14918,9 @@ tbody tr:hover{background:#faf6ef}
   </div>
 </footer>
 
+<!-- 每日北交所新闻速递数据（news_feed.js 与 index.html 同目录部署，自动化每日重写） -->
+<script src="./news_feed.js"></script>
+
 <!-- CloudBase Web SDK v3（PG 云端注册/审核同步；需与 index.html 同目录部署 tcb-sdk.esm.js） -->
 <script type="module">
 import cloudbase from "./tcb-sdk.esm.js";
@@ -16219,30 +16269,61 @@ function findCompany(id){ return DB.companies.find(c=>c.id===id); }
 
 /* ================= 导航 ================= */
 function go(view){
-  // 访客（未登录）仅可浏览公开的 H1 中报汇总板块，其余功能需登录
-  if(!Session && view!=="h1"){ showAuth("login"); return; }
-  ["dashboard","calc","notes","data","detail","h1"].forEach(v=>$("#view-"+v).classList.add("hidden"));
-  $("#view-"+view).classList.remove("hidden");
+  // 访客（未登录）可浏览公开板块：H1 中报汇总、每日新闻速递；其余功能需登录
+  if(!Session && !["h1","news"].includes(view)){ showAuth("login"); return; }
+  ["dashboard","calc","notes","data","detail","h1","news"].forEach(v=>{ const el=$("#view-"+v); if(el) el.classList.add("hidden"); });
+  const target=$("#view-"+view); if(target) target.classList.remove("hidden");
   $$("#mainNav .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===view));
   if(view==="dashboard") renderDashboard();
   if(view==="calc") renderCalc();
   if(view==="notes") renderNotes();
   if(view==="data") renderData();
+  if(view==="news") renderNews();
   if(view==="h1" && typeof initH1Public==="function") initH1Public();
   window.scrollTo(0,0);
 }
 
-/* 访客公开入口：隐藏登录层，仅展示 H1 中报汇总板块（无需登录） */
-function openPublicH1(){
+/* 访客公开入口：隐藏登录层，仅展示公开板块（无需登录） */
+function openPublic(view){
   const ub=$("#userBox");
   if(!Session && ub && !ub.dataset.guestBtn){
     ub.dataset.guestBtn="1";
     ub.innerHTML=`<button class="btn ghost" onclick="showAuth('login')">登录 / 注册</button>`;
   }
   $("#authLayer").classList.add("hidden");
-  go("h1");
+  go(view);
 }
+function openPublicH1(){ openPublic("h1"); }
+function openPublicNews(){ openPublic("news"); }
 function initH1Public(){ /* 预留：中报板块展示时钩子（数据为静态，无需额外加载） */ }
+
+/* ================= 每日北交所新闻速递 ================= */
+const NEWS_CATS=[{k:"all",l:"全部"},{k:"news",l:"市场新闻"},{k:"policy",l:"政策"},{k:"ann",l:"公司公告"},{k:"co",l:"公司动态"},{k:"ipo",l:"新股发行"}];
+let nfFilter="all";
+function newsList(){ return (window.NEWS_FEED&&Array.isArray(window.NEWS_FEED))?window.NEWS_FEED:[]; }
+function renderNews(){
+  const wrap=$("#nfList"), fw=$("#nfFilters"), up=$("#newsUpdated");
+  const items=newsList().slice().sort((a,b)=>String(b.t).localeCompare(String(a.t)));
+  if(up){ const u=window.NEWS_UPDATED||""; up.textContent=u?("（"+u+"）"):"—"; }
+  if(fw){ fw.innerHTML=NEWS_CATS.map(f=>`<span class="tag ${nfFilter===f.k?'hl':''}" style="cursor:pointer" onclick="setNfFilter('${f.k}')">${f.l}</span>`).join(""); }
+  if(!wrap) return;
+  const shown=nfFilter==="all"?items:items.filter(i=>i.cat===nfFilter);
+  if(!shown.length){ wrap.innerHTML=`<div class="nf-empty">暂无内容 — 每日 12:00 / 15:00 / 18:00 / 21:00 自动更新北交所新闻、政策与重要公告</div>`; return; }
+  const today=new Date().toISOString().slice(0,10);
+  wrap.innerHTML=shown.map(i=>{
+    const day = String(i.t||"").slice(0,10);
+    const time = String(i.t||"").slice(11);
+    const dayTag = day===today?`<span style="color:var(--red);font-weight:700">今天 ${time}</span>`:esc(i.t||"");
+    const catCls = NEWS_CATS.find(c=>c.k===i.cat);
+    const catName = (i.c&&i.c)||(catCls?catCls.l:"其他");
+    return `<div class="nf-item">
+      <div class="nf-top"><span class="nf-cat cat-${esc(i.cat||"news")}">${esc(catName)}</span><span class="nf-time">${dayTag}</span><span class="nf-src">来源：${esc(i.src||"")}</span></div>
+      <a class="nf-title" href="${esc(i.url||"#")}" target="_blank" rel="noopener">${esc(i.title||"")} ↗</a>
+      ${i.sum?`<div class="nf-sum">${esc(i.sum)}</div>`:""}
+    </div>`;
+  }).join("");
+}
+function setNfFilter(k){ nfFilter=k; renderNews(); }
 
 /* ================= 看板 ================= */
 function renderDashboard(){
