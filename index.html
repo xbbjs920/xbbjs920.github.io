@@ -986,7 +986,6 @@ tbody tr:hover{background:#faf6ef}
   /* ===== 每日北交所新闻速递 ===== */
   .news-hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-bottom:6px}
   .news-hero h2{margin:0;font-size:20px;color:#2a3040}
-  .news-badge{background:linear-gradient(135deg,var(--red),#a30d26);color:#fff;font-size:11px;font-weight:700;border-radius:20px;padding:4px 10px;letter-spacing:.5px}
   .news-meta{font-size:12px;color:var(--txt3);margin:0 0 12px;line-height:1.7}
   .news-meta b{color:var(--gold)}
   .nf-filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
@@ -1153,7 +1152,6 @@ tbody tr:hover{background:#faf6ef}
     <div class="card">
       <div class="news-hero">
         <h2>每日北交所新闻速递</h2>
-        <span class="news-badge">每日 12/15/18/21 点更新</span>
         <span class="nf-live" style="margin-left:auto">LIVE</span>
       </div>
       <p class="news-meta">自动收集北交所相关 <b>新闻 / 政策 / 上市公司重要公告</b>，点击标题跳转信息原始网页 · 数据更新于 <b id="newsUpdated">—</b> · 仅供研究参考，不构成投资建议</p>
@@ -16308,7 +16306,7 @@ function renderNews(){
   if(fw){ fw.innerHTML=NEWS_CATS.map(f=>`<span class="tag ${nfFilter===f.k?'hl':''}" style="cursor:pointer" onclick="setNfFilter('${f.k}')">${f.l}</span>`).join(""); }
   if(!wrap) return;
   const shown=nfFilter==="all"?items:items.filter(i=>i.cat===nfFilter);
-  if(!shown.length){ wrap.innerHTML=`<div class="nf-empty">暂无内容 — 每日 12:00 / 15:00 / 18:00 / 21:00 自动更新北交所新闻、政策与重要公告</div>`; return; }
+  if(!shown.length){ wrap.innerHTML=`<div class="nf-empty">暂无内容 — 北交所新闻、政策与重要公告将自动更新</div>`; return; }
   const today=new Date().toISOString().slice(0,10);
   wrap.innerHTML=shown.map(i=>{
     const day = String(i.t||"").slice(0,10);
