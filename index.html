@@ -1017,8 +1017,8 @@ tbody tr:hover{background:#faf6ef}
 </head>
 <body data-page-node-id="G7xnUxVyXqeOGxLaqDd1nf">
 
-<!-- ===== 认证层（登录 / 注册 / 管理员登录） ===== -->
-<div id="authLayer" class="auth-layer" data-page-node-id="9XaWAsuFwR50c13upZuBiA">
+<!-- ===== 认证层（登录 / 注册 / 管理员登录）—— 默认隐藏；AUTH_ENABLED=true 时由 init() 唤起 ===== -->
+<div id="authLayer" class="auth-layer hidden" data-page-node-id="9XaWAsuFwR50c13upZuBiA">
   <div class="auth-card" data-page-node-id="Uabr78XH7oHq6uWJFICbcC">
     <div class="auth-brand" data-page-node-id="zCQdBWJXLcGCzdQwOS9CDZ">
       <div class="logo-big" data-page-node-id="iOD2t3BKllVAVwWRklrBB4">西</div>
@@ -14953,6 +14953,13 @@ const pctColor=(v)=>{ if(v==null||isNaN(v)||!isFinite(v)) return `<span class="$
 const STORAGE_KEY="bse_ipo_workbench_v1";
 
 /* ================= 认证与用户系统 ================= */
+/* ★★ 认证总开关（临时） ★★
+   false = 暂停「注册 / 登录 / 管理员」环节，任何人打开页面即以「公开访问」身份直接进入工作台（只读）；
+   true  = 恢复手机号短信注册 + 机构审核 + 口令登录（需部署在 CloudBase 托管域名下才可用）。
+   —— 待 xbbjs.com 域名备案通过、CloudBase 安全域名可配后，把下面这行改回 true 并重新发布即可完整恢复。 */
+const AUTH_ENABLED=false;
+// 公开访问身份（仅用于本地只读浏览，不写入云端、不持久化会话）
+const PUBLIC_SESSION={uid:"public",name:"公开访问",org:"西部证券研发中心",role:"guest"};
 const USERS_KEY="bse_users_v1", SESSION_KEY="bse_session_v1", ADMIN_KEY="bse_admin_v1";
 let Users=[], Session=null, Admin={pwd:"GRD68E"};
 function hashPwd(s){ let h=7; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return "h"+h.toString(36); }
@@ -14975,6 +14982,7 @@ function findUserByUid(id){ return Users.find(u=>u.uid===id); }
 
 // 视图切换
 function showAuth(panel){
+  if(!AUTH_ENABLED){ toast("注册 / 登录已暂停，当前为公开浏览模式"); return; }
   $("#authLayer").classList.remove("hidden");
   $("#adminLayer").classList.add("hidden");
   ["authLogin","authRegister","authAdmin"].forEach(id=>$("#"+id).classList.add("hidden"));
@@ -14986,6 +14994,11 @@ function showAuth(panel){
 }
 function renderUserBox(){
   const box=$("#userBox"); if(!box) return;
+  // 认证暂停期间：顶栏仅展示「公开访问」标识，不提供登录 / 退出入口
+  if(!AUTH_ENABLED){
+    box.innerHTML=`<b>公开访问</b><span class="muted">注册 / 登录暂缓 · 待域名备案通过后开放</span>`;
+    return;
+  }
   if(!Session){ box.innerHTML=""; return; }
   box.innerHTML=`<b>${esc(Session.name)}</b><span class="muted">${esc(Session.org||"")}</span>`+
     (Session.role==="admin"?`<button class="btn" onclick="enterAdmin()">后台</button>`:"")+
@@ -14996,14 +15009,23 @@ function enterApp(){
   $("#authLayer").classList.add("hidden");
   $("#adminLayer").classList.add("hidden");
   load(); renderUserBox(); renderDashboard(); renderCalc(); go("dashboard");
-  toast("欢迎，"+(Session?Session.name:"")+"！");
+  if(AUTH_ENABLED) toast("欢迎，"+(Session?Session.name:"")+"！");
+}
+// 认证暂停期间的公开入口：不经登录直接进入工作台（只读，数据仅存本地浏览器）
+function enterPublic(){
+  Session=Object.assign({},PUBLIC_SESSION);
+  enterApp();
+  toast("注册 / 登录已暂停，当前为公开浏览模式");
 }
 function enterAdmin(){
   $("#authLayer").classList.add("hidden");
   renderAdmin(); $("#adminLayer").classList.remove("hidden");
 }
 function enterWork(){ Session=Session||{uid:"admin",name:"管理员",org:"",role:"admin"}; enterApp(); }
-function logout(){ Session=null; saveSession(); $("#adminLayer").classList.add("hidden"); showAuth("login"); }
+function logout(){
+  if(!AUTH_ENABLED){ toast("注册 / 登录已暂停，无需退出"); return; }
+  Session=null; saveSession(); $("#adminLayer").classList.add("hidden"); showAuth("login");
+}
 // 首次登录时把旧版工作台数据迁移到当前用户私有空间；无旧数据则初始化一份私有数据库
 function ensureUserDB(){
   try{
@@ -17547,6 +17569,9 @@ function toast(msg){ let t=$("#toast"); if(!t){ t=document.createElement("div");
 
 /* ================= 初始化 ================= */
 function init(){
+  // ① 认证暂停中：跳过注册 / 登录环节，直接以「公开访问」身份进入工作台（只读）
+  if(!AUTH_ENABLED){ enterPublic(); return; }
+  // ② 认证启用时：走原有会话校验 / 登录流程
   loadAuth();
   if(Session){
     if(Session.role==="admin"){ enterAdmin(); return; }
