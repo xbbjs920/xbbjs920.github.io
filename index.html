@@ -16555,7 +16555,7 @@ function renderDetail(){
     <a href="#firstday">首日复盘</a>
     <a href="#darkpool">暗盘</a>
     <a href="#rating">研判</a>
-    <a href="#report">深度报告</a>
+    <a href="#report">核心逻辑梳理</a>
   </nav>
 
   ${renderTimeline(c)}
@@ -17396,7 +17396,7 @@ function saveRating(){
   save(); renderDetail(); toast("研判已保存");
 }
 
-/* ================= 公司新股深度分析报告 ================= */
+/* ================= 核心逻辑梳理（原：公司新股深度分析报告） ================= */
 let reportEditId=null;
 function startReportEdit(id){ if(!canEdit()) return toast("仅管理员可编辑"); reportEditId=id; renderDetail(); setTimeout(()=>{const el=$("#report"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});},50); }
 function cancelReportEdit(){ reportEditId=null; renderDetail(); }
@@ -17405,13 +17405,14 @@ function renderReport(c){
   const has=r.investmentLogic||(r.risks&&r.risks.length)||r.keyAssumptions||r.marketViews||r.catalysts||r.valuation||r.companyOverview||r.companyHistory||r.productTable||r.equityStructure||r.financialHistory||r.revenueStructure||r.profitability||r.industryDef||r.marketSize||r.competitionLandscape||r.competitiveness||r.growthPoints||r.comparableAnalysis||r.profitModel||r.riskSection;
   const editBtn=canEdit()?`<span class="deep-edit" onclick="startReportEdit('${c.id}')">✎ 编辑</span>`:"";
   if(reportEditId===c.id) return renderReportEditor(c);
-  if(!has) return `<div class="card" id="report"><h2>公司新股深度分析报告${editBtn}</h2><div class="tiny">报告待撰写（三段式核心投资逻辑 / 投资要点四模块 / 正文六章）。${canEdit()?'点击右上角「编辑」在线撰写。':''}</div></div>`;
+  if(!has) return `<div class="card" id="report"><h2>核心逻辑梳理${editBtn}</h2><div class="tiny">以一位卖方分析师的角度，深度分析梳理该公司的买入逻辑以及潜在的风险因素。${canEdit()?'点击右上角「编辑」在线撰写。':''}</div></div>`;
   const sec=(title,content,id)=>content?`<div class="rp-sec" id="rp-${id}"><div class="deep-h3">${title}</div><div class="deep-para">${esc(content)}</div></div>`:"";
   const listSec=(title,arr,id)=>{
     const items=Array.isArray(arr)?arr:(typeof arr==="string"&&arr?arr.split(/[,，、;；]/).map(s=>s.trim()).filter(Boolean):[]);
     return items.length?`<div class="rp-sec" id="rp-${id}"><div class="deep-h3">${title}</div><ul class="rp-list">${items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
   };
-  return `<div class="card" id="report"><h2>公司新股深度分析报告${editBtn}</h2>
+  return `<div class="card" id="report"><h2>核心逻辑梳理${editBtn}</h2>
+  <div class="tiny" style="margin:-2px 0 10px">以一位卖方分析师的角度，深度分析梳理该公司的买入逻辑以及潜在的风险因素。</div>
   <div class="report-body">
     <div class="rp-part">第一部分 · 核心投资逻辑</div>
     ${sec("① 三段式核心投资逻辑", r.investmentLogic, "logic")}
@@ -17455,7 +17456,7 @@ function renderReportEditor(c){
   const r=c.report||{};
   const inp=(k,v,ph,h="70px")=>`<div class="field" style="margin-top:8px"><label>${ph}</label><textarea data-rk="${k}" placeholder="${ph}" style="min-height:${h}">${esc(v||"")}</textarea></div>`;
   return `<div class="card" id="report">
-  <h2>公司新股深度分析报告 · 编辑
+  <h2>核心逻辑梳理 · 编辑
     <span class="deep-edit" onclick="cancelReportEdit()">取消</span>
     <span class="deep-edit" style="background:var(--red);color:#fff;border-color:var(--red);margin-left:6px" onclick="saveReportEdit('${c.id}')">保存</span>
   </h2>
