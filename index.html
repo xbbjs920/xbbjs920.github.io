@@ -181,6 +181,21 @@ tbody tr:hover{background:#faf6ef}
 .report-body details{background:#fafbfd;border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:10px 14px}
 .report-body details summary{cursor:pointer;font-size:14px;font-weight:700;color:#2a3040;padding:6px 0;user-select:none}
 .report-body details[open] summary{color:var(--red)}
+/* 核心投资逻辑（精简重排版） */
+.logic-card{display:flex;gap:12px;background:linear-gradient(180deg,#fff,#fbfbfd);border:1px solid var(--line);border-radius:12px;padding:15px 16px;margin:10px 0;box-shadow:0 1px 4px rgba(196,18,48,.05)}
+.logic-num{flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--red),#d24a5f);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(196,18,48,.28);margin-top:1px}
+.logic-main{flex:1;min-width:0}
+.logic-title{font-size:14px;font-weight:800;color:var(--red);margin:0 0 7px;letter-spacing:.5px}
+.logic-title::before{content:"◆ ";color:var(--gold)}
+.logic-body{font-size:13px;line-height:1.95;color:var(--txt);white-space:pre-wrap;margin:0}
+.logic-sub{display:flex;gap:8px;margin:5px 0;line-height:1.9}
+.logic-sub .k{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#8a6d1a;background:linear-gradient(135deg,#fff8e6,#fdf3d7);border:1px solid #ecd9a0;border-radius:6px;padding:1px 8px;white-space:nowrap;height:fit-content;margin-top:2px}
+.logic-sub .v{flex:1;font-size:13px;color:var(--txt);line-height:1.9}
+.risk-block{margin-top:16px;border:1px solid #f0c4ca;border-left:4px solid var(--red);background:#fff7f8;border-radius:10px;padding:13px 16px}
+.risk-title{font-size:14px;font-weight:800;color:var(--red);margin:0 0 9px;display:flex;align-items:center;gap:6px}
+.risk-list{padding-left:18px;margin:0}
+.risk-list li{font-size:13px;line-height:1.9;margin-bottom:4px;color:#6b4a4d}
+.risk-list li::marker{color:var(--red)}
 .mini-kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:4px}
 .mini-kv .mk{background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
 .mini-kv .mk .k{font-size:11px;color:var(--txt3)}
@@ -17519,91 +17534,87 @@ function saveRating(){
 let reportEditId=null;
 function startReportEdit(id){ if(!canEdit()) return toast("仅管理员可编辑"); reportEditId=id; renderDetail(); setTimeout(()=>{const el=$("#report"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});},50); }
 function cancelReportEdit(){ reportEditId=null; renderDetail(); }
+/* 拆分投资逻辑字符串为结构化要点 */
+function splitLogic(text){
+  if(!text||!text.trim()) return [];
+  text=text.trim();
+  const CIRCLE='①②③④⑤⑥⑦⑧⑨⑩';
+  const finalize=(units)=>units.map(u=>{
+    const raw=u.raw||'';
+    if(/[①②③④⑤⑥⑦⑧⑨⑩]/.test(raw)){
+      const subs=[]; let any=false;
+      const re=new RegExp('(['+CIRCLE+'])([\\s\\S]*?)(?=['+CIRCLE+']|$)','g');
+      let m;
+      while((m=re.exec(raw))){
+        let s=m[2].trim().replace(/[;；]\s*$/,'').replace(/^——/,'');
+        if(!s) continue;
+        let k='', v=s, cut=-1; const i1=s.indexOf('——'); const i2=s.indexOf('：');
+        if(i1>0&&i1<=14) cut=i1; if(i2>0&&i2<=14&&(cut<0||i2<cut)) cut=i2;
+        if(cut>0){ k=s.slice(0,cut); v=s.slice(cut+(s.slice(cut,cut+2)==='——'?2:1)).trim(); }
+        subs.push({k,v}); any=true;
+      }
+      if(any&&subs.length>=2) return {title:u.title,subs,body:''};
+    }
+    return {title:u.title,subs:[],body:raw};
+  });
+  const units=[];
+  if(/【[^】]+】/.test(text)){
+    const re=/【([^】]+)】([\s\S]*?)(?=【[^】]+】|$)/g; let m;
+    while((m=re.exec(text))){
+      const t=m[1].trim().replace(/^第[一二三四五六七八九十百]+[段部分][·、．]?/,'');
+      units.push({title:t,raw:(m[2]||'').trim()});
+    }
+    if(units.length) return finalize(units);
+  }
+  const re2=new RegExp('(['+CIRCLE+'])([\\s\\S]*?)(?=['+CIRCLE+']|$)','g'); let m2;
+  while((m2=re2.exec(text))){
+    let raw=m2[2].trim().replace(/[;；]\s*$/,''); let title='';
+    let idx=raw.indexOf('——'); let sep=2;
+    if(idx<0){ idx=raw.indexOf('：'); sep=1; }
+    if(idx>0&&idx<=14){ title=raw.slice(0,idx); raw=raw.slice(idx+sep).trim(); }
+    units.push({title:title.trim(),raw});
+  }
+  if(units.length) return finalize(units);
+  return [{title:'',subs:[],body:text}];
+}
 function renderReport(c){
   const r=c.report||{};
-  const has=r.investmentLogic||(r.risks&&r.risks.length)||r.keyAssumptions||r.marketViews||r.catalysts||r.valuation||r.companyOverview||r.companyHistory||r.productTable||r.equityStructure||r.financialHistory||r.revenueStructure||r.profitability||r.industryDef||r.marketSize||r.competitionLandscape||r.competitiveness||r.growthPoints||r.comparableAnalysis||r.profitModel||r.riskSection;
+  const has=r.investmentLogic||(r.risks&&r.risks.length);
   const editBtn=canEdit()?`<span class="deep-edit" onclick="startReportEdit('${c.id}')">✎ 编辑</span>`:"";
   if(reportEditId===c.id) return renderReportEditor(c);
   if(!has) return `<div class="card" id="report"><h2>核心逻辑梳理${editBtn}</h2><div class="tiny">以一位卖方分析师的角度，深度分析梳理该公司的买入逻辑以及潜在的风险因素。${canEdit()?'点击右上角「编辑」在线撰写。':''}</div></div>`;
-  const sec=(title,content,id)=>content?`<div class="rp-sec" id="rp-${id}"><div class="deep-h3">${title}</div><div class="deep-para">${esc(content)}</div></div>`:"";
-  const listSec=(title,arr,id)=>{
-    const items=Array.isArray(arr)?arr:(typeof arr==="string"&&arr?arr.split(/[,，、;；]/).map(s=>s.trim()).filter(Boolean):[]);
-    return items.length?`<div class="rp-sec" id="rp-${id}"><div class="deep-h3">${title}</div><ul class="rp-list">${items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
-  };
+  const risks=Array.isArray(r.risks)?r.risks.filter(Boolean):(typeof r.risks==="string"&&r.risks?r.risks.split(/[,，、;；]/).map(s=>s.trim()).filter(Boolean):[]);
+  const items=splitLogic(r.investmentLogic);
+  const logicHtml=items.length?items.map((it,i)=>{
+    const num=String(i+1).padStart(2,'0');
+    let inner='';
+    if(it.title) inner+=`<div class="logic-title">${esc(it.title)}</div>`;
+    if(it.subs&&it.subs.length) inner+=it.subs.map(s=>`<div class="logic-sub"><span class="k">${esc(s.k)}</span><span class="v">${esc(s.v)}</span></div>`).join('');
+    else if(it.body) inner+=`<div class="logic-body">${esc(it.body)}</div>`;
+    if(!inner) return '';
+    return `<div class="logic-card"><div class="logic-num">${num}</div><div class="logic-main">${inner}</div></div>`;
+  }).join(''):'';
+  const riskHtml=risks.length?`<div class="risk-block"><div class="risk-title">⚠ 风险提示</div><ul class="risk-list">${risks.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
   return `<div class="card" id="report"><h2>核心逻辑梳理${editBtn}</h2>
   <div class="tiny" style="margin:-2px 0 10px">以一位卖方分析师的角度，深度分析梳理该公司的买入逻辑以及潜在的风险因素。</div>
   <div class="report-body">
-    <div class="rp-part">第一部分 · 核心投资逻辑</div>
-    ${sec("① 三段式核心投资逻辑", r.investmentLogic, "logic")}
-    ${listSec("② 风险提示", r.risks, "risks")}
-    <div class="rp-part">第二部分 · 投资要点</div>
-    ${sec("关键假设", r.keyAssumptions, "assump")}
-    ${sec("区别于市场的观点", r.marketViews, "views")}
-    ${sec("股价上涨催化剂", r.catalysts, "catalyst")}
-    ${sec("估值与评级", r.valuation, "valuation")}
-    <div class="rp-part">第三部分 · 正文</div>
-    <details open><summary>第一章 公司概况</summary>
-      ${sec("1.1 主营业务与行业定位", r.companyOverview, "ch1-1")}
-      ${sec("1.1 发展历程", r.companyHistory, "ch1-2")}
-      ${sec("1.1 主营产品分类", r.productTable, "ch1-3")}
-      ${sec("1.2 股权结构", r.equityStructure, "ch1-4")}
-      ${sec("1.3 历年财务概况", r.financialHistory, "ch1-5")}
-      ${sec("1.3 收入结构拆分", r.revenueStructure, "ch1-6")}
-      ${sec("1.3 盈利水平分析", r.profitability, "ch1-7")}
-    </details>
-    <details><summary>第二章 行业发展现状</summary>
-      ${sec("2.1 行业定义与完整产业链", r.industryDef, "ch2-1")}
-      ${sec("2.2 行业市场规模与增长驱动", r.marketSize, "ch2-2")}
-      ${sec("2.3 全球+国内竞争格局", r.competitionLandscape, "ch2-3")}
-    </details>
-    <details><summary>第三章 公司核心竞争力与未来成长增量</summary>
-      ${sec("3.1 公司核心竞争壁垒", r.competitiveness, "ch3-1")}
-      ${sec("3.2 公司成长增长点", r.growthPoints, "ch3-2")}
-    </details>
-    <details><summary>第四章 可比公司财务对比分析</summary>
-      ${sec("可比公司财务对比（营收/净利/毛利率/研发费率/周转率/ROE）", r.comparableAnalysis, "ch4")}
-    </details>
-    <details><summary>第五章 盈利预测（逻辑框架）</summary>
-      ${sec("盈利预测逻辑框架", r.profitModel, "ch5")}
-    </details>
-    <details><summary>第六章 风险提示</summary>
-      ${sec("风险提示（含汇率/研发等适配风险）", r.riskSection, "ch6")}
-    </details>
+    <div class="rp-part">核心投资逻辑</div>
+    ${logicHtml||`<div class="logic-body" style="padding:4px 2px">${esc(r.investmentLogic)}</div>`}
+    ${riskHtml}
   </div></div>`;
 }
 function renderReportEditor(c){
   const r=c.report||{};
-  const inp=(k,v,ph,h="70px")=>`<div class="field" style="margin-top:8px"><label>${ph}</label><textarea data-rk="${k}" placeholder="${ph}" style="min-height:${h}">${esc(v||"")}</textarea></div>`;
+  const inp=(k,v,ph,h="150px")=>`<div class="field" style="margin-top:8px"><label>${ph}</label><textarea data-rk="${k}" placeholder="${ph}" style="min-height:${h}">${esc(v||"")}</textarea></div>`;
   return `<div class="card" id="report">
   <h2>核心逻辑梳理 · 编辑
     <span class="deep-edit" onclick="cancelReportEdit()">取消</span>
     <span class="deep-edit" style="background:var(--red);color:#fff;border-color:var(--red);margin-left:6px" onclick="saveReportEdit('${c.id}')">保存</span>
   </h2>
   <div class="deep-form">
-    <label class="sec">第一部分 · 核心投资逻辑</label>
-    ${inp("investmentLogic",r.investmentLogic,"① 三段式核心投资逻辑（市场地位 / 客户·技术·国产替代壁垒 / 产能·中长期增长点）","110px")}
-    <div class="field" style="margin-top:8px"><label>② 风险提示（每行一条，约 6 条；外销占比高必加汇兑风险、研发型企业必加研发不及预期风险）</label><textarea data-rk="risks" data-arr="1" placeholder="每行一条风险" style="min-height:110px">${esc((Array.isArray(r.risks)?r.risks:(typeof r.risks==="string"&&r.risks?r.risks.split(/[,，、;；]/):[])).join("\n"))}</textarea></div>
-    <label class="sec">第二部分 · 投资要点</label>
-    ${inp("keyAssumptions",r.keyAssumptions,"关键假设（营收/产能/放量/下游景气假设逻辑，不写预测数值）","90px")}
-    ${inp("marketViews",r.marketViews,"区别于市场的观点（认知误区 vs 真实基本面）","90px")}
-    ${inp("catalysts",r.catalysts,"股价上涨催化剂（短期/中长期：产能、客户验证、政策、需求、新品）","90px")}
-    ${inp("valuation",r.valuation,"估值与评级（估值逻辑、赛道稀缺性、同业对比思路，不测算 PE/目标价）","80px")}
-    <label class="sec">第三部分 · 正文</label>
-    ${inp("companyOverview",r.companyOverview,"1.1 主营业务与行业定位（招股书业务与技术原文+行业地位论证）","110px")}
-    ${inp("companyHistory",r.companyHistory,"1.1 发展历程（官网/招股书梳理，时间线）","90px")}
-    ${inp("productTable",r.productTable,"1.1 主营产品分类（表格或清单）","90px")}
-    ${inp("equityStructure",r.equityStructure,"1.2 股权结构（实控人/控制权/员工持股/战投亮点）","90px")}
-    ${inp("financialHistory",r.financialHistory,"1.3 历年财务概况（营收利润趋势与波动归因）","90px")}
-    ${inp("revenueStructure",r.revenueStructure,"1.3 收入结构（分产品+分地区）","90px")}
-    ${inp("profitability",r.profitability,"1.3 盈利水平（毛利率/期间费用率/净利率变化逻辑）","90px")}
-    ${inp("industryDef",r.industryDef,"2.1 行业定义与完整产业链","90px")}
-    ${inp("marketSize",r.marketSize,"2.2 行业市场规模与增长驱动（数据+下游景气传导）","90px")}
-    ${inp("competitionLandscape",r.competitionLandscape,"2.3 全球+国内竞争格局（对手对比表/各家优劣势）","110px")}
-    ${inp("competitiveness",r.competitiveness,"3.1 核心竞争壁垒（产品/技术/资质/客户/产能）","90px")}
-    ${inp("growthPoints",r.growthPoints,"3.2 成长增长点（产能利用率/募投项目表/新增长曲线）","110px")}
-    ${inp("comparableAnalysis",r.comparableAnalysis,"第四章 可比公司财务对比（3-4家，六大指标对比总结）","90px")}
-    ${inp("profitModel",r.profitModel,"第五章 盈利预测逻辑框架（只写假设逻辑，不输出数值）","90px")}
-    ${inp("riskSection",r.riskSection,"第六章 风险提示（6条左右，每条=风险名称+经营影响）","110px")}
+    <label class="sec">核心投资逻辑</label>
+    ${inp("investmentLogic",r.investmentLogic,"三段式核心投资逻辑（① 行业地位 / ② 核心壁垒 / ③ 增长驱动；各段可用【】或①②③分点，二级要点用「客户壁垒——…」格式）","160px")}
+    <div class="field" style="margin-top:8px"><label>风险提示（每行一条，约 6 条；外销占比高必加汇兑风险、研发型企业必加研发不及预期风险）</label><textarea data-rk="risks" data-arr="1" placeholder="每行一条风险" style="min-height:110px">${esc((Array.isArray(r.risks)?r.risks:(typeof r.risks==="string"&&r.risks?r.risks.split(/[,，、;；]/):[])).join("\n"))}</textarea></div>
   </div></div>`;
 }
 function saveReportEdit(id){
@@ -17616,6 +17627,8 @@ function saveReportEdit(id){
     else v=v.trim();
     r[el.getAttribute("data-rk")]=v;
   });
+  // 模块已精简为「核心投资逻辑」，清除旧的投资要点/正文字段
+  ["keyAssumptions","marketViews","catalysts","valuation","companyOverview","companyHistory","productTable","equityStructure","financialHistory","revenueStructure","profitability","industryDef","marketSize","competitionLandscape","competitiveness","growthPoints","comparableAnalysis","profitModel","riskSection"].forEach(k=>{ delete r[k]; });
   c.report=r; reportEditId=null;
   try{ save(); }catch(e){ return toast("保存失败："+e.message); }
   renderDetail(); toast("深度分析报告已保存");
